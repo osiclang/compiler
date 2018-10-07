@@ -4,7 +4,7 @@ OSIC Compiler is a compiler for a specially developed language. OSIC stands for 
 
 OSIC Documentations:
 
-* [Docs](documenation.md) - How to write code with OSIC language 
+* [Docs](commands.md) - How to write code with OSIC language 
 
 ### How to Use
 
@@ -17,13 +17,20 @@ $ ./compile yourSource.osic yourOutput
 ```
 
 # Roadmap
-- Add Writer commands to write files and send via network
-- Add Reader to read files and recieve request on ports
-- For Short (make it touring!)
-- Remove eclipse depencies - it should use his own code parser
-- Add Packagehandling
-- Add ability to work with classes and new instances of it
-- final: Rewrite Code to make him compile himself!
+- :heavy_check_mark: Add print and input
+- :heavy_check_mark: Add handling for methods
+- :x: Add Writer commands to write files and send via network
+- :x: Add Reader to read files and recieve request on ports
+- :x: The language must pass the touring test
+- :x: Remove eclipse depencies - it should use his own code parser
+- :x: Add Packagehandling
+- :x: Add ability to work with classes and new instances of it
+- :x: final: Rewrite Code to make him compile himself!
+
+# Add your Review (a little checklist)
+- Make sure that methods of styling are similar to already existing related methods. Look at POJO's and helpers. This ensures that the code has a readable style.
+- Do not leave TODO: Marks or comments in code. The code is more readable if there are no unnecessary comments in the code.
+- Describe clearly in the pullrequest what the code does and which problem is solved. New features can be submitted as issues.
 
 # Code of Conduct
 
