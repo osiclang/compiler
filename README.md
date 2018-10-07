@@ -1,5 +1,5 @@
 
-![alt text](https://github.com/OSIClang/compiler/blob/master/logo/osic-owl.png "OSIC Logo")
+![alt text](https://github.com/OSIClang/compiler/blob/master/logo/osic-owl.png =250x "OSIC Logo")
 OSIC Compiler is a compiler for a specially developed language. OSIC stands for Objectiv Symbolic Instruction Code and should be completely compilable to a wide spectrum of machines in addition to a programming language that is very easy to learn.
 
 ### Docs
