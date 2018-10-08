@@ -14,12 +14,14 @@ public final class buildX86_64 extends CodeGenerator
 
     private final Writer writer;
 
-    public buildX86_64(Writer writer) {
+    public buildX86_64(Writer writer)
+    {
         this.writer = writer;
     }
 
     @Override
-    public void generate(InstructionSequence seq) throws IOException {
+    public void generate(InstructionSequence seq) throws IOException
+    {
         writer.append("[extern exit]\n");
         writer.append("[extern printf]\n");
         writer.append("[extern scanf]\n");
@@ -171,6 +173,37 @@ public final class buildX86_64 extends CodeGenerator
                     writer.append("  mov al, 0\n");
                     writer.append("  call printf\n");
                     break;
+
+                case FPREP:
+                    writer.append("filetext db \""+instruction.getStringOperand().get()+"\"");
+                    break;
+
+                case FWRITE:
+                    writer.append("filename db \""+instruction.getStringOperand().get()+"\",0");
+                    writer.append("handler dw ?");
+
+                    writer.append("mov  ax,@data");
+                    writer.append("mov  ds,ax");
+
+                    writer.append("mov  ah, 3ch");
+                    writer.append("mov  cx, 0");
+                    writer.append("mov  dx, offset filename");
+                    writer.append("int  21h");
+
+                    writer.append("mov  handler, ax");
+
+                    writer.append("mov  ah, 40h");
+                    writer.append("mov  bx, handler");
+                    writer.append("mov  cx, 5  ;STRING LENGTH.");
+                    writer.append("mov  dx, offset filetext");
+                    writer.append("int  21h");
+                    break;
+
+                case FCLOSE:
+                    writer.append("mov  ah, 3eh");
+                    writer.append("mov  bx, handler");
+                    writer.append("int  21h");
+                    break;
             }
         }
 
@@ -186,17 +219,20 @@ public final class buildX86_64 extends CodeGenerator
         }
     }
 
-    private String escape(String value) {
+    private String escape(String value)
+    {
         value = value.replace("\n", "\", 10, \"");
         return value;
     }
 
-    private int varIndex(Instruction instruction) {
+    private int varIndex(Instruction instruction)
+    {
         return (instruction.getStringOperand().get().charAt(0) - 'A') * 8;
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() throws IOException
+    {
         writer.close();
     }
 

@@ -1,5 +1,7 @@
 package com.osic.compiler.compile.parser;
 
+import com.osic.compiler.compile.astObjects.FilePrepareStatement;
+import com.osic.compiler.compile.astObjects.FileWriteStatement;
 import com.osic.compiler.compile.tokenizer.Tokenizer;
 import com.osic.compiler.compile.astObjects.BinaryExpression;
 import com.osic.compiler.compile.astObjects.BinaryOperator;
@@ -122,6 +124,38 @@ public final class Parser implements Closeable
                 } while (accept(Type.COMMA) && accept(Type.LPAREN) && accept(Type.RPAREN));
 
                 return new PrintStatement(values);
+
+            case "fopen":
+                consume();
+
+                List<StringExpression> filenameValues = new ArrayList<>();
+                do {
+                    if (token.getType() == Type.STRING) {
+                        filenameValues.add(new ImmediateString(token.getValue().get()));
+                        consume();
+                    }
+                    else {
+                        throw new IOException("Unexpected " + token.getType() + ", expecting Filename as STRING");
+                    }
+                } while (accept(Type.COMMA) && accept(Type.LPAREN) && accept(Type.RPAREN));
+
+                return new FilePrepareStatement(filenameValues);
+
+            case "fwrite":
+                consume();
+
+                List<StringExpression> fileInputValue = new ArrayList<>();
+                do {
+                    if (token.getType() == Type.STRING) {
+                        fileInputValue.add(new ImmediateString(token.getValue().get()));
+                        consume();
+                    }
+                    else {
+                        fileInputValue.add(nextExpression());
+                    }
+                } while (accept(Type.COMMA) && accept(Type.LPAREN) && accept(Type.RPAREN));
+
+                return new FileWriteStatement(fileInputValue);
 
             case "if":
                 consume();

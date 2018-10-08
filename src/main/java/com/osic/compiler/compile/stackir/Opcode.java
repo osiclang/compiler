@@ -22,5 +22,8 @@ public enum Opcode {
     IN,
     OUTS,
     OUTI,
-    LABEL
+    LABEL,
+    FPREP,
+    FWRITE,
+    FCLOSE,
 }

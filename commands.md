@@ -2,17 +2,30 @@
 
 ## Keywords
 `call` (only internal compiler - calls a method. For normal code just write the methodname eg. `test()` )
+
 `print`
+
 `input`
+
 `public`
+
 `class`
+
 `if`
+
+`fopen`
+
+`fwrite`
+
 `return`
+
 `end`
 
 ## types
 Actually we got two now types
+
 `int` integer presentaion
+
 `char` representation for a character (can used for character as well `char d="ello";` - but this is an issue!) 
 
 ## Controll Structures
@@ -45,7 +58,27 @@ public test(){
 }
 ```
 
-## print
+## Output
+
+## fopen (String filename)
+Open or create a file for writing
+```sh
+fopen ("/home/user/test.txt");
+```
+
+## fwrite (Object)
+Store and close a array of characters
+```sh
+fwrite ("this is a text to store");
+```
+Also used for operative output
+```sh
+int x = 1;
+int r = 3;
+fwrite (x+x*r);
+```
+
+## print (Object)
 Presentation of a variable or string.
 Concatination or operations must be enclosed!
 ```sh
@@ -54,7 +87,7 @@ print "hello";
 print (h+"ello");
 ```
 
-## input
+## input (String)
 Read a console input.
 Actually it is a typeless representation.
 ```sh

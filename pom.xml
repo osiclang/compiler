@@ -5,8 +5,8 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.skalski</groupId>
-  <artifactId>barista</artifactId>
-  <version>0.0.1-BETA</version>
+  <artifactId>OSIC Compiler</artifactId>
+  <version>0.0.2-BETA</version>
 
   <build>
     <plugins>
