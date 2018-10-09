@@ -44,14 +44,20 @@ public final class buildX86_64 extends CodeGenerator
                     break;
 
                 case PUSHS:
-                    String label = seq.createGeneratedLabel();
-                    strings.put(label, instruction.getStringOperand().get());
-                    writer.append("  push " + label + "\n");
+                    String pushsSeq = seq.createGeneratedLabel();
+                    strings.put(pushsSeq, instruction.getStringOperand().get());
+                    writer.append("  push " + pushsSeq + "\n");
                     break;
 
                 case LOAD:
                     writer.append("  mov rax, [rbp - " + varIndex(instruction) + "]\n");
                     writer.append("  push rax\n");
+                    break;
+
+                case CHARSSTORE:
+                    String dwordSeq = seq.createGeneratedLabel();
+                    strings.put(dwordSeq, instruction.getStringOperand().get());
+                    writer.append("  push " + dwordSeq + "\n");
                     break;
 
                 case STORE:
@@ -175,11 +181,11 @@ public final class buildX86_64 extends CodeGenerator
                     break;
 
                 case FPREP:
-                    writer.append("filetext db \""+instruction.getStringOperand().get()+"\"");
+                    writer.append("filetext db \"" + instruction.getStringOperand().get() + "\"");
                     break;
 
                 case FWRITE:
-                    writer.append("filename db \""+instruction.getStringOperand().get()+"\",0");
+                    writer.append("filename db \"" + instruction.getStringOperand().get() + "\",0");
                     writer.append("handler dw ?");
 
                     writer.append("mov  ax,@data");

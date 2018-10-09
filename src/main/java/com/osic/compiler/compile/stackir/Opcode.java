@@ -5,6 +5,7 @@ public enum Opcode {
     PUSHI,
     LOAD,
     STORE,
+    CHARSSTORE,
     ADD,
     MUL,
     SUB,

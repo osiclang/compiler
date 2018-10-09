@@ -3,17 +3,9 @@ package test;
 public class Main {
 
     public void main(){
-        test();
         int a = 1;
         int b = 2;
         int c = a + b;
         print c;
-        test();
     }
-
-    private String test(){
-        chars t = "hello";
-        print t;
-    }
-
 }

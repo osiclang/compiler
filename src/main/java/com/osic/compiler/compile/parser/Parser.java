@@ -2,6 +2,7 @@ package com.osic.compiler.compile.parser;
 
 import com.osic.compiler.compile.astObjects.FilePrepareStatement;
 import com.osic.compiler.compile.astObjects.FileWriteStatement;
+import com.osic.compiler.compile.astObjects.LetCharsStatement;
 import com.osic.compiler.compile.tokenizer.Tokenizer;
 import com.osic.compiler.compile.astObjects.BinaryExpression;
 import com.osic.compiler.compile.astObjects.BinaryOperator;
@@ -121,7 +122,7 @@ public final class Parser implements Closeable
                     else {
                         values.add(nextExpression());
                     }
-                } while (accept(Type.COMMA) && accept(Type.LPAREN) && accept(Type.RPAREN));
+                } while (accept(Type.COMMA));
 
                 return new PrintStatement(values);
 
@@ -245,7 +246,7 @@ public final class Parser implements Closeable
 
                 return new LetStatement(integer, nextExpression());
 
-            case "char":
+            case "chars":
                 consume();
 
                 if (token.getType() != Type.VAR && token.getType() != Type.STRING) {
@@ -257,7 +258,7 @@ public final class Parser implements Closeable
 
                 expect(Type.EQ);
 
-                return new LetStatement(string, nextExpression());
+                return new LetCharsStatement(string, nextExpression());
 
             case "return":
                 consume();

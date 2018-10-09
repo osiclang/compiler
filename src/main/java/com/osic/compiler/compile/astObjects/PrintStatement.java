@@ -57,8 +57,6 @@ public final class PrintStatement extends Statement {
     public void compile(InstructionSequence seq) {
         for (StringExpression value : values) {
             value.compile(seq);
-
-            /* this is rather hacky, but the only place types are important, so it doesn't seem worth improving it */
             seq.append(new Instruction(value instanceof ImmediateString ? Opcode.OUTS : Opcode.OUTI));
         }
 
