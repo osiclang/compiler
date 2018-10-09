@@ -1,0 +1,21 @@
+# IntelliJ files
+**/.idea/
+**/.idea/*
+**/*.iml
+
+# Eclipse files
+**/.project
+**/.classpath
+**/.settings/
+**/.apt_generated/
+**/.flattened-pom.xml
+**/.factorypath
+**/MANIFEST.MF
+
+# project files
+**/target/
+
+# caching files
+**/*.db
+/bin/
+

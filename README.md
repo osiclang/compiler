@@ -12,10 +12,16 @@ OSIC Documentations:
 
 This Compiler requires [Java](https://oracle.com/), GCC and NASM at this time and can only compile LINUX 86_64 binaries .
 
-Install the dependencies and devDependencies and start the server.
+```sh
+$ sudo apt-get install nasm
+$ apt-get install build-essential
+```
+
+To test the Compiler (this is far away from productive Use).
 
 ```sh
-$ ./compile yourSource.osic yourOutput 
+$ sudo chmod +x compile.sh
+$ ./compile.sh exampleFiles/example1.osic 
 ```
 
 # Roadmap

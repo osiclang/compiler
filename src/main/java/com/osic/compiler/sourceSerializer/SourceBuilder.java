@@ -80,35 +80,35 @@ public class SourceBuilder
         return methodsLines.get(0);
     }
 
-    private void addMethods(MethodDTO methodDTO, Integer lineCounter)
+    private void addMethods(MethodDTO methodDTO, Integer cmdIdenifier)
     {
 
         for (CommandDTO commandDTO : methodDTO.getCommands()) {
             if (hasMethod(commandDTO.getCommand())) {
                 if (getMethodLineCode(commandDTO.getCommand()) == 0) {
-                    int subCounter = lineCounter + 500;
-                    commands.put(lineCounter, "call " + (subCounter) + ";\n");
-                    lineCounter++;
-                    fetchMethodSources(commandDTO.getCommand(), subCounter);
+                    int methodCmdIdentifier = cmdIdenifier + 500;
+                    commands.put(cmdIdenifier, "call " + (methodCmdIdentifier) + ";\n");
+                    cmdIdenifier++;
+                    fetchMethodSources(commandDTO.getCommand(), methodCmdIdentifier);
                 }
                 else {
-                    commands.put(lineCounter, "call " + getMethodLineCode(commandDTO.getCommand()) + ";\n");
-                    lineCounter++;
+                    commands.put(cmdIdenifier, "call " + getMethodLineCode(commandDTO.getCommand()) + ";\n");
+                    cmdIdenifier++;
                 }
                 continue;
             }
-            commands.put(lineCounter, commandDTO.getCommand());
-            lineCounter++;
+            commands.put(cmdIdenifier, commandDTO.getCommand());
+            cmdIdenifier++;
         }
 
         if (methodDTO.getMethodName().equals("main")) {
-            commands.put(lineCounter, "end;\n");
+            commands.put(cmdIdenifier, "end;\n");
         } else {
-            commands.put(lineCounter, "return;\n");
+            commands.put(cmdIdenifier, "return;\n");
         }
     }
 
-    private void fetchMethodSources(String methodName, Integer lineCounter)
+    private void fetchMethodSources(String methodName, Integer cmdIdentifier)
     {
         List<MethodDTO> methods = new ArrayList<>();
         source.getPackageDTOS().forEach(
@@ -122,8 +122,8 @@ public class SourceBuilder
         methods.forEach(methodDTO -> {
             if (methodDTO.getMethodName().equals(getMethodName(methodName))) {
                 if (methodDTO.getKnowSubLineNumber() == 0) {
-                    methodDTO.setKnowSubLineNumber(lineCounter);
-                    addMethods(methodDTO, lineCounter);
+                    methodDTO.setKnowSubLineNumber(cmdIdentifier);
+                    addMethods(methodDTO, cmdIdentifier);
                 }
             }
         });

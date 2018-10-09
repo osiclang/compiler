@@ -13,7 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public final class OSICCompiler
+public class OSICCompiler
 {
     public static void main(String[] args) throws Exception {
         Arguments arguments = new Arguments(args);
