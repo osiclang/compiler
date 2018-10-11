@@ -10,101 +10,99 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import org.eclipse.jdt.core.dom.AST;
-import org.eclipse.jdt.core.dom.ASTParser;
-import org.eclipse.jdt.core.dom.ASTVisitor;
-import org.eclipse.jdt.core.dom.Block;
-import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.Expression;
-import org.eclipse.jdt.core.dom.IMethodBinding;
-import org.eclipse.jdt.core.dom.ITypeBinding;
-import org.eclipse.jdt.core.dom.MethodDeclaration;
-import org.eclipse.jdt.core.dom.MethodInvocation;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SourceMapper
 {
-    PackageDTO packageDTO = new PackageDTO();
-    SourceDTO sourceDTO = new SourceDTO();
-    ClassDTO classDTO = new ClassDTO();
+    private static final String CLASS_NAME_PATTERN = "\r?\nclass(.*?);";
+    private static final String PACKAGE_NAME_PATTERN = "\r?\n?package(.*?);";
+    private static final String METHOD_NAME_PATTERN = "\r?\n(.*?)\\(\\)\\{";
+    private static final String METHOD_LINES_PATTERN = "(?<=\r?\n%s\\(\\)\\{)([^\r]*?)(?=})";
 
-    public SourceDTO mapClass(File file) throws IOException
+    private String filename;
+    private PackageDTO packageDTO = new PackageDTO();
+    private SourceDTO sourceDTO = new SourceDTO();
+    private ClassDTO classDTO = new ClassDTO();
+
+    public SourceDTO mapClass(File file) throws Exception
     {
+        this.filename = file.getName();
         parse(readFile(file.getAbsolutePath()), file.getName());
         sourceDTO.addPackageDTO(packageDTO);
 
         return sourceDTO;
     }
 
-    private void parse(String str, String className)
+    private void parse(String source, String className) throws Exception
     {
-        classDTO.setClassName(className);
-        ASTParser parser = ASTParser.newParser(AST.JLS4);
-        parser.setSource(str.toCharArray());
-        parser.setKind(ASTParser.K_COMPILATION_UNIT);
-        parser.setResolveBindings(true);
-
-        final CompilationUnit cu = (CompilationUnit) parser.createAST(null);
-
-        cu.accept(new ASTVisitor()
-        {
-
-            public boolean visit(CompilationUnit node) {
-                packageDTO.setPackageName(node.getPackage().getName().getFullyQualifiedName());
-
-                node.imports().forEach(importPackage -> {
-                    packageDTO.addImports(importPackage.toString());
-                });
-
-                return true;
-            }
-
-            public boolean visit(MethodDeclaration node) {
-                MethodDTO methodDTO = new MethodDTO();
-                methodDTO.setMethodName(node.getName().toString());
-
-                List<CommandDTO> commands = new ArrayList<>();
-
-                node.getBody().statements().forEach(statement -> {
-                    CommandDTO commandDTO = new CommandDTO();
-                    commandDTO.setCommand(statement.toString());
-                    commands.add(commandDTO);
-                });
-
-                methodDTO.setCommands(commands);
-
-                    Block block = node.getBody();
-                    block.accept(new ASTVisitor() {
-                        public boolean visit(MethodInvocation node) {
-                            Expression expression = node.getExpression();
-                            if (expression != null) {
-                                System.out.println("Expr: " + expression.toString());
-                                ITypeBinding typeBinding = expression.resolveTypeBinding();
-                                if (typeBinding != null) {
-                                    System.out.println("Type: " + typeBinding.getName());
-                                }
-                            }
-                            IMethodBinding binding = node.resolveMethodBinding();
-                            if (binding != null) {
-                                ITypeBinding type = binding.getDeclaringClass();
-                                if (type != null) {
-                                    System.out.println("Decl: " + type.getName());
-                                }
-                            }
-
-                            return true;
-                        }
-                    });
-                    classDTO.addMethod(methodDTO);
-                return true;
-            }
-        });
+        fetchClassName(source);
+        fetchPackageName(source);
+        fetchMethods(source);
         packageDTO.addClass(classDTO);
 
     }
 
+    private void fetchPackageName(String source) throws Exception
+    {
+        Pattern packageNamePattern = Pattern.compile(PACKAGE_NAME_PATTERN);
+        Matcher packageNameMatcher = packageNamePattern.matcher(source);
+        while (packageNameMatcher.find()){
+            if(packageDTO.getPackageName() != null){
+                throw new Exception(String.format("Syntax[%s] package is set more than once", filename));
+            }
+            packageDTO.setPackageName(packageNameMatcher.group(1).trim());
+        }
+    }
+
+    private void fetchClassName(String source) throws Exception
+    {
+        Pattern classNamePattern = Pattern.compile(CLASS_NAME_PATTERN);
+        Matcher classNameMatcher = classNamePattern.matcher(source);
+        while (classNameMatcher.find()){
+            if(classDTO.getClassName() != null){
+                throw new Exception(String.format("Syntax[%s] class is set more than once", filename));
+            }
+            classDTO.setClassName(classNameMatcher.group(1).trim());
+        }
+    }
+
+    private void fetchMethods(String source)
+    {
+        Pattern pattern = Pattern.compile(METHOD_NAME_PATTERN);
+        Matcher matcher = pattern.matcher(source);
+
+        List<MethodDTO> methodDTOList = new ArrayList<>();
+
+        while (matcher.find()) {
+            MethodDTO methodDTO = new MethodDTO();
+            String methodName = matcher.group(1);
+            methodDTO.setMethodName(methodName);
+            List<CommandDTO> command = new ArrayList<>();
+
+            Pattern methodPattern = Pattern.compile(String.format(METHOD_LINES_PATTERN, methodName));
+            Matcher methodMatcher = methodPattern.matcher(source);
+
+            while (methodMatcher.find()) {
+                String[] methodLines = methodMatcher.group(1).split("\r?\n");
+                for (String methodLine : methodLines) {
+                    if (!methodLine.trim().equals("")) {
+                        String prepMethodLine = methodLine.trim() + "\n";
+                        CommandDTO commandDTO = new CommandDTO();
+                        commandDTO.setCommand(prepMethodLine);
+                        command.add(commandDTO);
+                    }
+                }
+                methodDTO.setCommands(command);
+            }
+            methodDTOList.add(methodDTO);
+        }
+        classDTO.setMethods(methodDTOList);
+    }
+
+
     private String readFile(String pathname) throws IOException
     {
-
         File file = new File(pathname);
         StringBuilder fileContents = new StringBuilder((int) file.length());
         Scanner scanner = new Scanner(file);

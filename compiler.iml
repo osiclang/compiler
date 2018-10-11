@@ -9,16 +9,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Maven: org.eclipse.tycho:org.eclipse.jdt.core:3.9.1.v20130905-0837" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.core:runtime:3.9.100-v20131218-1515" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse:osgi:3.10.0-v20140606-1445" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.equinox:common:3.6.200-v20130402-1505" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.core:jobs:3.6.0-v20140424-0053" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.equinox:registry:3.5.400-v20140428-1507" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.equinox:preferences:3.5.200-v20140224-1527" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.core:contenttype:3.4.200-v20140207-1251" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.equinox:app:1.3.200-v20130910-1609" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.birt.runtime:org.eclipse.core.resources:3.8.101.v20130717-0806" level="project" />
     <orderEntry type="library" name="Maven: org.apache.commons:commons-collections4:4.2" level="project" />
     <orderEntry type="library" name="Maven: commons-cli:commons-cli:1.4" level="project" />
   </component>

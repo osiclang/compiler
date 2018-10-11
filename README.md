@@ -30,7 +30,7 @@ $ ./compile.sh exampleFiles/example1.osic
 - :x: Add Writer commands to write files and send via network
 - :x: Add Reader to read files and recieve request on ports
 - :x: The language must pass the touring test
-- :x: Remove eclipse depencies - it should use his own code parser
+- :heavy_check_mark: Remove eclipse depencies - it should use his own code parser
 - :x: Add Packagehandling
 - :x: Add ability to work with classes and new instances of it
 - :x: final: Rewrite Code to make him compile himself!

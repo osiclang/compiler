@@ -30,6 +30,7 @@ public class OSICCompiler
         SourceBuilder sourceBuilder = new SourceBuilder(sourceMap);
         String source= sourceBuilder.fetchImperativeSource();
 
+        System.out.println(source);
         //now we can translate the imperative Commands to something flat for ASM
         try (Tokenizer tokenizer = new Tokenizer(source)) {
             try (Parser parser = new Parser(tokenizer)) {
