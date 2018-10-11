@@ -34,7 +34,7 @@ Actually we got two now types
 Single "if" produce an direct action. It can be an return or an further complete operation, or even a method call.
 ```java
 public main(){
-    square()
+    square();
 }
 
 public square(){
@@ -80,7 +80,7 @@ fwrite (x+x*r);
 
 ## print (Object)
 Presentation of a variable or string.
-Concatination or operations must be enclosed!
+Concatenation or operations must be enclosed with parentheses.
 ```sh
 char h="h";
 print "hello";
