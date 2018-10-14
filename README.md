@@ -7,22 +7,62 @@ OSIC Compiler is a compiler for the OSIC language. OSIC stands for Objectiv Symb
 OSIC Documentations:
 
 * [Docs](commands.md) - How to write code with OSIC language 
+* `src` source code of OSIC compiler and interpreter
+* `lib` source code of core OSIC library
 
 ### How to Use
 
-This Compiler requires [Java](https://oracle.com/), GCC and NASM at this time and can only compile LINUX 86_64 binaries .
+This Compiler/Interpreter requires GCC.
 
 ```sh
-$ sudo apt-get install nasm
 $ apt-get install build-essential
 ```
 
 To test the Compiler (this is far away from productive Use).
 
 ```sh
-$ sudo chmod +x compile.sh
-$ ./compile.sh exampleFiles/example1.osic 
+$ osic example.osic
 ```
+
+Enter interpreter "live mode"
+
+```sh
+$ ./osic
+```
+
+To exit the "live mode" just insert `\exit`
+
+
+
+### Build Instructions
+```
+make
+```
+or
+
+```
+make DEBUG=0 STATIC=0 USE_MALLOC=0 MODULE_OS=1 MODULE_SOCKET=1
+```
+
+* `DEBUG`, debug compiler flags as boolean- in this case `false`
+* `STATIC`, 0 build with dynamic-linked library, 1 build with static-linked.
+* `USE_MALLOC`, stdlib's `malloc` ensure return aligned pointer
+* `MODULE_OS`, for POSIX builtin os library is true
+* `MODULE_SOCKET`, for BSD Socket builtin library is true
+
+Windows Platform
+----------------
+
+Lemon can build on Windows via [Mingw](http://www.mingw.org/wiki/Install_MinGW),
+getting source code and use command
+
+```
+mingw32-make
+```
+
+### Porting
+
+`lib/os.c` and `lib/socket.c` are supporting POSIX and Microsoft Windows environment. Ensure you have a compatible Windows Build environment installed.
 
 # Roadmap
 - :heavy_check_mark: Add print and input

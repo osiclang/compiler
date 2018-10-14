@@ -1,0 +1,1149 @@
+#include "osic.h"
+#include "lnumber.h"
+#include "lstring.h"
+#include "linteger.h"
+
+#include <stdio.h>
+#include <limits.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define SMALLINT_MAX (long)(ULONG_MAX >> 2)
+#define SMALLINT_MIN (long)(-SMALLINT_MAX)
+
+void *
+linteger_create(struct osic *osic, int digits);
+
+void *
+linteger_create_object_from_long(struct osic *osic, long value);
+
+void *
+linteger_create_object_from_integer(struct osic *osic,
+                                    struct lobject *integer);
+
+static void
+normalize(struct osic *osic, struct linteger *a)
+{
+	a->ndigits = extend_length(a->length, a->digits);;
+
+	if (a->ndigits == 0) {
+		a->sign = 1;
+	}
+}
+
+int
+linteger_cmp(struct osic *osic, struct lobject *a, struct lobject *b)
+{
+	struct linteger *ia;
+	struct linteger *ib;
+
+	if (!lobject_is_pointer(osic, a) && !lobject_is_pointer(osic, b)) {
+		long la;
+		long lb;
+
+		la = linteger_to_long(osic, a);
+		lb = linteger_to_long(osic, b);
+
+		if (la > lb) {
+			return 1;
+		}
+
+		if (la < lb) {
+			return -1;
+		}
+
+		return 0;
+	}
+
+	assert(lobject_is_pointer(osic, a) && lobject_is_pointer(osic, b));
+
+	ia = (struct linteger *)a;
+	ib = (struct linteger *)b;
+
+	if (ia->sign == 1 && ib->sign == 0) {
+		return 1;
+	}
+
+	if (ia->sign == 0 && ib->sign == 1) {
+		return -1;
+	}
+
+	if (ia->ndigits > ib->ndigits) {
+		return 1;
+	}
+
+	if (ia->ndigits < ib->ndigits) {
+		return -1;
+	}
+
+	if (ia->sign) {
+		return extend_cmp(ia->ndigits, ia->digits, ib->digits);
+	} else {
+		return extend_cmp(ia->ndigits, ib->digits, ia->digits);
+	}
+
+	return 0;
+}
+
+/*
+ * CERT Coding Standard INT32-C Integer Overflow Check Algorithms
+ */
+static struct lobject *
+linteger_add(struct osic *osic, struct lobject *a, struct lobject *b)
+{
+	int ndigits;
+	struct linteger *ia;
+	struct linteger *ib;
+	struct linteger *ic;
+	unsigned long carry;
+
+	if (!lobject_is_pointer(osic, a) && !lobject_is_pointer(osic, b)) {
+		long la;
+		long lb;
+
+		la = linteger_to_long(osic, a);
+		lb = linteger_to_long(osic, b);
+
+		if ((lb > 0 && la > (LONG_MAX - lb)) ||
+		    (lb < 0 && la < (LONG_MIN - lb)))
+		{
+			goto promot;
+		}
+
+		return linteger_create_from_long(osic, la + lb);
+	}
+promot:
+	ia = linteger_create_object_from_integer(osic, a);
+	if (!ia) {
+		return NULL;
+	}
+
+	ib = linteger_create_object_from_integer(osic, b);
+	if (!ib) {
+		return NULL;
+	}
+
+	if (ia->sign == ib->sign) {
+		if (ia->ndigits > ib->ndigits) {
+			ndigits = ia->ndigits + 1;
+		} else {
+			ndigits = ib->ndigits + 1;
+		}
+		ic = linteger_create(osic, ndigits);
+
+		carry = extend_add(ic->digits,
+		                   ia->ndigits,
+		                   ia->digits,
+		                   ib->ndigits,
+		                   ib->digits,
+		                   0);
+		ic->digits[ic->length - 1] = (extend_t)(carry % EXTEND_BASE);
+		ic->sign = ia->sign;
+	} else if (linteger_cmp(osic,
+	                        (struct lobject *)ia,
+	                        (struct lobject *)ib) > 0)
+	{
+		ic = linteger_create(osic, ia->ndigits);
+		extend_sub(ic->digits,
+		           ia->ndigits,
+		           ia->digits,
+		           ib->ndigits,
+		           ib->digits,
+		           0);
+		ic->sign = ia->sign;
+	} else {
+		ic = linteger_create(osic, ib->ndigits);
+		extend_sub(ic->digits,
+		           ib->ndigits,
+		           ib->digits,
+		           ia->ndigits,
+		           ia->digits,
+		           0);
+		ic->sign = ib->sign;
+	}
+
+	normalize(osic, ic);
+	return (struct lobject *)ic;
+}
+
+static struct lobject *
+linteger_sub(struct osic *osic, struct lobject *a, struct lobject *b)
+{
+	int ndigits;
+	struct linteger *ia;
+	struct linteger *ib;
+	struct linteger *ic;
+	unsigned long carry;
+
+	if (!lobject_is_pointer(osic, a) && !lobject_is_pointer(osic, b)) {
+		long la;
+		long lb;
+
+		la = linteger_to_long(osic, a);
+		lb = linteger_to_long(osic, b);
+
+		if ((lb > 0 && la < LONG_MIN + lb) ||
+		    (lb < 0 && la > LONG_MAX + lb))
+		{
+			goto promot;
+		}
+
+		return linteger_create_from_long(osic, la - lb);
+	}
+
+promot:
+	ia = linteger_create_object_from_integer(osic, a);
+	if (!ia) {
+		return NULL;
+	}
+
+	ib = linteger_create_object_from_integer(osic, b);
+	if (!ib) {
+		return NULL;
+	}
+
+	if (ia->sign != ib->sign) {
+		if (ia->ndigits > ib->ndigits) {
+			ndigits = ia->ndigits + 1;
+		} else {
+			ndigits = ib->ndigits + 1;
+		}
+		ic = linteger_create(osic, ndigits);
+
+		carry = extend_add(ic->digits,
+		                   ia->ndigits,
+		                   ia->digits,
+		                   ib->ndigits,
+		                   ib->digits,
+		                   0);
+		ic->digits[ic->length - 1] = (extend_t)(carry & EXTEND_BASE);
+		ic->sign = ia->sign;
+	} else if (linteger_cmp(osic,
+	                        (struct lobject *)ia,
+	                        (struct lobject *)ib) > 0)
+	{
+		ic = linteger_create(osic, ia->ndigits);
+		extend_sub(ic->digits,
+		           ia->ndigits,
+		           ia->digits,
+		           ib->ndigits,
+		           ib->digits,
+		           0);
+		ic->sign = ia->sign;
+	} else {
+		ic = linteger_create(osic, ib->ndigits);
+		extend_sub(ic->digits,
+		           ib->ndigits,
+		           ib->digits,
+		           ia->ndigits,
+		           ia->digits,
+		           0);
+		ic->sign = -ib->sign;
+	}
+
+	normalize(osic, ic);
+	return (struct lobject *)ic;
+}
+
+static struct lobject *
+linteger_mul(struct osic *osic, struct lobject *a, struct lobject *b)
+{
+	struct linteger *ia;
+	struct linteger *ib;
+	struct linteger *ic;
+
+	if (!lobject_is_pointer(osic, a) && !lobject_is_pointer(osic, b)) {
+		long la;
+		long lb;
+
+		la = linteger_to_long(osic, a);
+		lb = linteger_to_long(osic, b);
+
+		if (la > 0) {  /* la is positive */
+			if (lb > 0) {  /* la and lb are positive */
+				if (la > (LONG_MAX / lb)) {
+					goto promot;
+				}
+			} else { /* la positive, lb nonpositive */
+				if (lb < (LONG_MIN / la)) {
+					goto promot;
+				}
+			} /* la positive, lb nonpositive */
+		} else { /* la is nonpositive */
+			if (lb > 0) { /* la is nonpositive, lb is positive */
+				if (la < (LONG_MIN / lb)) {
+					goto promot;
+				}
+			} else { /* la and lb are nonpositive */
+				if ( (la != 0) && (lb < (LONG_MAX / la))) {
+					goto promot;
+				}
+			} /* End if la and lb are nonpositive */
+		} /* End if la is nonpositive */
+
+		return linteger_create_from_long(osic, la * lb);
+	}
+
+promot:
+	ia = linteger_create_object_from_integer(osic, a);
+	if (!ia) {
+		return NULL;
+	}
+
+	ib = linteger_create_object_from_integer(osic, b);
+	if (!ib) {
+		return NULL;
+	}
+
+	ic = linteger_create(osic, ia->ndigits + ib->ndigits);
+	extend_mul(ic->digits,
+	           ia->ndigits,
+	           ia->digits,
+	           ib->ndigits,
+	           ib->digits);
+	ic->sign = ia->sign == ib->sign ? 1 : -1;
+
+	normalize(osic, ic);
+	return (struct lobject *)ic;
+}
+
+static struct lobject *
+linteger_div(struct osic *osic, struct lobject *a, struct lobject *b)
+{
+	struct linteger *ia;
+	struct linteger *ib;
+	struct linteger *ic;
+	struct linteger *id;
+	struct linteger *ie;
+
+	if (!lobject_is_pointer(osic, a) && !lobject_is_pointer(osic, b)) {
+		long la;
+		long lb;
+
+		la = linteger_to_long(osic, a);
+		lb = linteger_to_long(osic, b);
+
+		if (lb == 0) {
+			const char *fmt;
+
+			fmt = "divide by zero '%@/0'";
+			return lobject_error_arithmetic(osic, fmt, a);
+		}
+
+		if ((la == LONG_MIN) && (lb == -1)) {
+			goto promot;
+		}
+
+		return linteger_create_from_long(osic, la / lb);
+	}
+
+promot:
+	ia = linteger_create_object_from_integer(osic, a);
+	if (!ia) {
+		return NULL;
+	}
+
+	ib = linteger_create_object_from_integer(osic, b);
+	if (!ib) {
+		return NULL;
+	}
+
+	ic = linteger_create(osic, ia->ndigits);
+	if (!ic) {
+		return NULL;
+	}
+	id = linteger_create(osic, ib->ndigits);
+	if (!id) {
+		return NULL;
+	}
+	ie = linteger_create(osic, ia->ndigits + ib->ndigits + 2);
+	if (!ie) {
+		return NULL;
+	}
+	extend_div(ic->digits,
+	           ia->ndigits,
+	           ia->digits,
+	           ib->ndigits,
+	           ib->digits,
+	           id->digits,
+	           ie->digits);
+	ic->sign = ia->sign == ib->sign ? 1 : -1;
+
+	normalize(osic, ic);
+	return (struct lobject *)ic;
+}
+
+static struct lobject *
+linteger_mod(struct osic *osic, struct lobject *a, struct lobject *b)
+{
+	struct linteger *ia;
+	struct linteger *ib;
+	struct linteger *ic;
+	struct linteger *id;
+	struct linteger *ie;
+
+	if (!lobject_is_pointer(osic, a) && !lobject_is_pointer(osic, b)) {
+		long la;
+		long lb;
+
+		la = linteger_to_long(osic, a);
+		lb = linteger_to_long(osic, b);
+
+		if (lb == 0) {
+			const char *fmt;
+
+			fmt = "divide by zero '%@/0'";
+			return lobject_error_arithmetic(osic, fmt, a);
+		}
+
+		if ((la == LONG_MIN) && (lb == -1)) {
+			goto promot;
+		}
+
+		return linteger_create_from_long(osic, la % lb);
+	}
+promot:
+	ia = linteger_create_object_from_integer(osic, a);
+	if (!ia) {
+		return NULL;
+	}
+
+	ib = linteger_create_object_from_integer(osic, b);
+	if (!ib) {
+		return NULL;
+	}
+
+	ic = linteger_create(osic, ia->ndigits);
+	if (!ic) {
+		return NULL;
+	}
+	id = linteger_create(osic, ib->ndigits);
+	if (!id) {
+		return NULL;
+	}
+	ie = linteger_create(osic, ia->ndigits + ib->ndigits + 2);
+	if (!ie) {
+		return NULL;
+	}
+	extend_div(ic->digits,
+	           ia->ndigits,
+	           ia->digits,
+	           ib->ndigits,
+	           ib->digits,
+	           id->digits,
+	           ie->digits);
+	ic->sign = ia->sign == ib->sign ? 1 : -1;
+
+	normalize(osic, ic);
+	return (struct lobject *)id;
+}
+
+static struct lobject *
+linteger_neg(struct osic *osic, struct lobject *a)
+{
+	struct linteger *ia;
+	struct linteger *ic;
+
+	if (!lobject_is_pointer(osic, a)) {
+		long la;
+
+		la = linteger_to_long(osic, a);
+
+		return linteger_create_from_long(osic, -la);
+	}
+
+	ia = (struct linteger *)a;
+	ic = linteger_create(osic, ia->ndigits);
+	if (!ic) {
+		return NULL;
+	}
+	memcpy(ic->digits, ia->digits, ia->ndigits * sizeof(extend_t));
+	ic->sign = ia->sign ? 0 : 1;
+	ic->ndigits = ia->ndigits;
+
+	return (struct lobject *)ic;
+}
+
+static struct lobject *
+linteger_shl(struct osic *osic, struct lobject *a, struct lobject *b)
+{
+	long s;
+	int ndigits;
+	struct linteger *ia;
+	struct linteger *ic;
+
+	if (!lobject_is_pointer(osic, a) && !lobject_is_pointer(osic, b)) {
+		long la;
+		long lb;
+
+		la = linteger_to_long(osic, a);
+		lb = linteger_to_long(osic, b);
+
+		if (lb < 0) {
+			const char *fmt;
+
+			fmt = "negative shift '%@ << %@'";
+			return lobject_error_arithmetic(osic, fmt, a, b);
+		}
+
+		if ((lb >= (long)sizeof(la) * 8) || (la > (LONG_MAX >> lb))) {
+			goto promot;
+		}
+
+		return linteger_create_from_long(osic, la << lb);
+	}
+promot:
+	ia = linteger_create_object_from_integer(osic, a);
+	if (!ia) {
+		return NULL;
+	}
+
+	s = (linteger_to_long(osic, b) + EXTEND_BITS-1) & ~(EXTEND_BITS-1);
+	ndigits = ia->ndigits + (int)s / EXTEND_BITS;
+	ic = linteger_create(osic, ndigits);
+	if (!ic) {
+		return NULL;
+	}
+	extend_shl(ic->length, ic->digits, ia->ndigits, ia->digits, (int)s, 0);
+	ic->sign = ia->sign;
+
+	normalize(osic, ic);
+	return (struct lobject *)ic;
+}
+
+static struct lobject *
+linteger_shr(struct osic *osic, struct lobject *a, struct lobject *b)
+{
+	int s;
+	struct linteger *ia;
+	struct linteger *ic;
+
+	if (!lobject_is_pointer(osic, a) && !lobject_is_pointer(osic, b)) {
+		long la;
+		long lb;
+
+		la = linteger_to_long(osic, a);
+		lb = linteger_to_long(osic, b);
+
+		if (lb < 0) {
+			const char *fmt;
+
+			fmt = "negative shift '%@ >> %@'";
+			return lobject_error_arithmetic(osic, fmt, a, b);
+		}
+
+		return linteger_create_from_long(osic, la >> lb);
+	}
+
+	ia = linteger_create_object_from_integer(osic, a);
+	if (!ia) {
+		return NULL;
+	}
+
+	s = (int)linteger_to_long(osic, b);
+	if (s >= 8 * ia->ndigits) {
+		return linteger_create(osic, 0);
+	}
+
+	ic = linteger_create(osic, ia->ndigits - s/EXTEND_BITS);
+	if (!ic) {
+		return NULL;
+	}
+	extend_shr(ic->length, ic->digits, ia->ndigits, ia->digits, s, 0);
+	ic->sign = ia->sign;
+
+	normalize(osic, ic);
+	return (struct lobject *)ic;
+}
+
+static struct lobject *
+linteger_bitwise_not(struct osic *osic, struct lobject *a)
+{
+	extend_t one[1];
+	struct linteger *ia;
+	struct linteger *ic;
+	unsigned long carry;
+
+	if (!lobject_is_pointer(osic, a)) {
+		long la;
+
+		la = linteger_to_long(osic, a);
+		return linteger_create_from_long(osic, ~la);
+	}
+
+	ia = (struct linteger *)a;
+	ic = linteger_create(osic, ia->ndigits + 1);
+	if (!ic) {
+		return NULL;
+	}
+
+	one[0] = 1;
+	carry = extend_add(ic->digits, ia->ndigits, ia->digits, 1, one, 0);
+	ic->digits[ic->length - 1] = (extend_t)(carry % EXTEND_BASE);
+	ic->sign = ia->sign ? 0 : 1;
+
+	normalize(osic, ic);
+	return (struct lobject *)ic;
+}
+
+static struct lobject *
+linteger_bitwise_and(struct osic *osic, struct lobject *a, struct lobject *b)
+{
+	int i;
+	int ndigits;
+	struct linteger *ia;
+	struct linteger *ib;
+	struct linteger *ic;
+
+	if (!lobject_is_pointer(osic, a) && !lobject_is_pointer(osic, b)) {
+		long la;
+		long lb;
+
+		la = linteger_to_long(osic, a);
+		lb = linteger_to_long(osic, b);
+
+		return linteger_create_from_long(osic, la & lb);
+	}
+
+	ia = linteger_create_object_from_integer(osic, a);
+	if (!ia) {
+		return NULL;
+	}
+
+	ib = linteger_create_object_from_integer(osic, b);
+	if (!ib) {
+		return NULL;
+	}
+
+	if (ia->ndigits < ib->ndigits) {
+		ndigits = ia->ndigits;
+	} else {
+		ndigits = ib->ndigits;
+	}
+	ic = linteger_create(osic, ndigits);
+	if (!ic) {
+		return NULL;
+	}
+	ic->sign = ia->sign;
+
+	for (i = 0; i < ic->ndigits; i++) {
+		ic->digits[i] = ia->digits[i] & ib->digits[i];
+	}
+
+	normalize(osic, ic);
+
+	return (struct lobject *)ic;
+}
+
+static struct lobject *
+linteger_bitwise_xor(struct osic *osic, struct lobject *a, struct lobject *b)
+{
+	int i;
+	int min;
+	int max;
+	struct linteger *ia;
+	struct linteger *ib;
+	struct linteger *ic;
+	struct linteger *x;
+
+	if (!lobject_is_pointer(osic, a) && !lobject_is_pointer(osic, b)) {
+		long la;
+		long lb;
+
+		la = linteger_to_long(osic, a);
+		lb = linteger_to_long(osic, b);
+
+		return linteger_create_from_long(osic, la ^ lb);
+	}
+
+	ia = linteger_create_object_from_integer(osic, a);
+	if (!ia) {
+		return NULL;
+	}
+
+	ib = linteger_create_object_from_integer(osic, b);
+	if (!ib) {
+		return NULL;
+	}
+
+	if (ia->ndigits > ib->ndigits) {
+		max = ia->ndigits;
+		min = ib->ndigits;
+		x = ia;
+	} else {
+		min = ia->ndigits;
+		max = ib->ndigits;
+		x = ib;
+	}
+	ic = linteger_create(osic, max);
+	if (!ic) {
+		return NULL;
+	}
+	ic->sign = ia->sign;
+
+	for (i = 0; i < min; i++) {
+		ic->digits[i] = ia->digits[i] ^ ib->digits[i];
+	}
+
+	for (; i < max; i++) {
+		ic->digits[i] = x->digits[i] ^ 0;
+	}
+
+	normalize(osic, ic);
+	return (struct lobject *)ic;
+}
+
+static struct lobject *
+linteger_bitwise_or(struct osic *osic, struct lobject *a, struct lobject *b)
+{
+	int i;
+	int min;
+	int max;
+	struct linteger *ia;
+	struct linteger *ib;
+	struct linteger *ic;
+	struct linteger *x;
+
+	if (!lobject_is_pointer(osic, a) && !lobject_is_pointer(osic, b)) {
+		long la;
+		long lb;
+
+		la = linteger_to_long(osic, a);
+		lb = linteger_to_long(osic, b);
+
+		return linteger_create_from_long(osic, la | lb);
+	}
+
+	ia = linteger_create_object_from_integer(osic, a);
+	if (!ia) {
+		return NULL;
+	}
+
+	ib = linteger_create_object_from_integer(osic, b);
+	if (!ib) {
+		return NULL;
+	}
+
+	if (ia->ndigits > ib->ndigits) {
+		x = ia;
+		min = ib->ndigits;
+		max = ia->ndigits;
+	} else {
+		x = ib;
+		max = ib->ndigits;
+		min = ia->ndigits;
+	}
+	ic = linteger_create(osic, max);
+	if (!ic) {
+		return NULL;
+	}
+	ic->sign = ia->sign;
+
+	for (i = 0; i < min; i++) {
+		ic->digits[i] = ia->digits[i] | ib->digits[i];
+	}
+
+	for (; i < max; i++) {
+		ic->digits[i] = x->digits[i];
+	}
+
+	normalize(osic, ic);
+	return (struct lobject *)ic;
+}
+
+static struct lobject *
+linteger_string(struct osic *osic, struct lobject *self)
+{
+	char buffer[40960];
+	char *p;
+	int size;
+	struct linteger *a;
+	struct linteger *integer;
+
+	if (!lobject_is_pointer(osic, self)) {
+		snprintf(buffer,
+			 sizeof(buffer),
+			 "%ld",
+			 linteger_to_long(osic, self));
+	} else {
+		integer = (struct linteger *)self;
+		if (integer->ndigits == 0) {
+			return lstring_create(osic, "0", 1);
+		}
+
+		if (integer->sign == 0) {
+			buffer[0] = '-';
+			p = buffer + 1;
+			size = sizeof(buffer) - 1;
+		} else {
+			p = buffer;
+			size = sizeof(buffer);
+		}
+		a = linteger_create(osic, integer->ndigits);
+		memcpy(a->digits,
+		       integer->digits,
+		       integer->ndigits * sizeof(extend_t));
+		a->ndigits = integer->ndigits;
+		extend_to_str(a->ndigits, a->digits, p, size, 10);
+	}
+	buffer[sizeof(buffer) - 1] = '\0';
+
+	return lstring_create(osic, buffer, strlen(buffer));
+}
+
+struct lobject *
+linteger_method(struct osic *osic,
+                struct lobject *self,
+                int method, int argc, struct lobject *argv[])
+{
+
+#define binop(op) do {                                                         \
+	if (lobject_is_integer(osic, argv[0])) {                              \
+		return linteger_ ## op (osic, self, argv[0]);                 \
+	}                                                                      \
+	if (lobject_is_number(osic, argv[0])) {                               \
+		struct lobject *number;                                        \
+		if (lobject_is_pointer(osic, self)) {                         \
+			const char *cstr;                                      \
+			struct lobject *string;                                \
+			string = linteger_string(osic, self);                 \
+			cstr = lstring_to_cstr(osic, string);                 \
+			number = lnumber_create_from_cstr(osic, cstr);        \
+		} else {                                                       \
+			long value;                                            \
+			value = linteger_to_long(osic, self);                 \
+			number = lnumber_create_from_long(osic, value);       \
+		}                                                              \
+		if (!number) {                                                 \
+			return NULL;                                           \
+		}                                                              \
+		return lobject_method_call(osic, number, method, argc, argv); \
+	}                                                                      \
+	return lobject_default(osic, self, method, argc, argv);               \
+} while (0)
+
+#define cmpop(op) do {                                                         \
+	if (lobject_is_integer(osic, argv[0])) {                              \
+		struct lobject *a = self;                                      \
+		struct lobject *b = argv[0];                                   \
+		if (lobject_is_pointer(osic, a) ||                            \
+		    lobject_is_pointer(osic, b))                              \
+		{                                                              \
+			a = linteger_create_object_from_integer(osic, a);     \
+			if (!a) {                                              \
+				return NULL;                                   \
+			}                                                      \
+			b = linteger_create_object_from_integer(osic, b);     \
+			if (!b) {                                              \
+				return NULL;                                   \
+			}                                                      \
+		}                                                              \
+		if (linteger_cmp(osic, a, b) op 0) {                          \
+			return osic->l_true;                                  \
+		}                                                              \
+		return osic->l_false;                                         \
+	}                                                                      \
+	if (lobject_is_number(osic, argv[0])) {                               \
+		struct lobject *number;                                        \
+		if (lobject_is_pointer(osic, self)) {                         \
+			const char *cstr;                                      \
+			struct lobject *string;                                \
+			string = linteger_string(osic, self);                 \
+			cstr = lstring_to_cstr(osic, string);                 \
+			number = lnumber_create_from_cstr(osic, cstr);        \
+		} else {                                                       \
+			long value;                                            \
+			value = linteger_to_long(osic, self);                 \
+			number = lnumber_create_from_long(osic, value);       \
+		}                                                              \
+		if (!number) {                                                 \
+			return NULL;                                           \
+		}                                                              \
+		return lobject_method_call(osic, number, method, argc, argv); \
+	}                                                                      \
+	return lobject_default(osic, self, method, argc, argv);               \
+} while (0)
+
+	switch (method) {
+	case LOBJECT_METHOD_ADD:
+		binop(add);
+
+	case LOBJECT_METHOD_SUB:
+		binop(sub);
+
+	case LOBJECT_METHOD_MUL:
+		binop(mul);
+
+	case LOBJECT_METHOD_DIV:
+		binop(div);
+
+	case LOBJECT_METHOD_MOD:
+		binop(mod);
+
+	case LOBJECT_METHOD_POS:
+		return self;
+
+	case LOBJECT_METHOD_NEG:
+		return linteger_neg(osic, self);
+
+	case LOBJECT_METHOD_SHL:
+		binop(shl);
+
+	case LOBJECT_METHOD_SHR:
+		binop(shr);
+
+	case LOBJECT_METHOD_LT:
+		cmpop(<);
+
+	case LOBJECT_METHOD_LE:
+		cmpop(<=);
+
+	case LOBJECT_METHOD_EQ:
+		cmpop(==);
+
+	case LOBJECT_METHOD_NE:
+		cmpop(!=);
+
+	case LOBJECT_METHOD_GE:
+		cmpop(>=);
+
+	case LOBJECT_METHOD_GT:
+		cmpop(>);
+
+	case LOBJECT_METHOD_BITWISE_NOT:
+		return linteger_bitwise_not(osic, self);
+
+	case LOBJECT_METHOD_BITWISE_AND:
+		binop(bitwise_and);
+
+	case LOBJECT_METHOD_BITWISE_XOR:
+		binop(bitwise_xor);
+
+	case LOBJECT_METHOD_BITWISE_OR:
+		binop(bitwise_or);
+
+	case LOBJECT_METHOD_HASH:
+		return self;
+
+	case LOBJECT_METHOD_NUMBER:
+		return self;
+
+	case LOBJECT_METHOD_INTEGER:
+		return self;
+
+	case LOBJECT_METHOD_BOOLEAN:
+		if (linteger_to_long(osic, self)) {
+			return osic->l_true;
+		}
+		return osic->l_false;
+
+	case LOBJECT_METHOD_STRING:
+		return linteger_string(osic, self);
+
+	default:
+		return lobject_default(osic, self, method, argc, argv);
+	}
+}
+
+long
+linteger_to_long(struct osic *osic, struct lobject *object)
+{
+	uintptr_t sign;
+	long value;
+
+	if (lobject_is_pointer(osic, object)) {
+		unsigned long uvalue;
+		struct linteger *integer;
+
+		integer = (struct linteger *)object;
+		uvalue = extend_to_long(integer->ndigits, integer->digits);
+		if (uvalue > LONG_MAX) {
+			return LONG_MAX;
+		}
+
+		value = uvalue;
+		if (integer->sign == -1) {
+			value = -value;
+		}
+	} else {
+		sign = ((uintptr_t)object) & 0x2;
+		value = ((uintptr_t)object) >> 2;
+		if (sign) {
+			value = -value;
+		}
+	}
+
+	return value;
+}
+
+void *
+linteger_create(struct osic *osic, int digits)
+{
+	size_t size;
+	struct linteger *self;
+
+	size = digits * sizeof(extend_t);
+
+	self = lobject_create(osic, sizeof(*self) + size, linteger_method);
+	if (self) {
+		self->sign = 1;
+		self->length = digits;
+		self->ndigits = 1;
+	}
+
+	return self;
+}
+
+void *
+linteger_create_object_from_long(struct osic *osic, long value)
+{
+	struct linteger *self;
+
+	self = linteger_create(osic, sizeof(long));
+	if (self) {
+		if (value < 0) {
+			self->sign = 0;
+			value = -value;
+		}
+		extend_from_long(self->length, self->digits, value);
+		normalize(osic, self);
+	}
+
+	return self;
+}
+
+void *
+linteger_create_object_from_integer(struct osic *osic,
+                                    struct lobject *integer)
+{
+	long value;
+
+	if (lobject_is_pointer(osic, integer)) {
+		return integer;
+	}
+	value = linteger_to_long(osic, integer);
+
+	return linteger_create_object_from_long(osic, value);
+}
+
+void *
+linteger_create_from_long(struct osic *osic, long value)
+{
+	struct linteger *integer;
+
+	/* create smallint if possible */
+	if (value > SMALLINT_MIN && value < SMALLINT_MAX) {
+		/*
+		 * signed value shifting is undefined behavior in C
+		 * so change negative value to postivie and pack 1 sign bit
+		 * never use value directly, two's complement is not necessary
+		 */
+		int sign; /* 0, positive, 1 negative */
+
+		sign = 0;
+		if (value < 0) {
+			sign = 0x2;
+			value = -value;
+		}
+
+		integer = (void *)(((uintptr_t)value << 2) | sign | 0x1);
+
+		return integer;
+	}
+
+	return linteger_create_object_from_long(osic, value);
+}
+
+void *
+linteger_create_from_cstr(struct osic *osic, const char *cstr)
+{
+	long value;
+	struct linteger *self;
+
+	value = strtol(cstr, NULL, 0);
+	if (value != LONG_MAX && value != LONG_MIN) {
+		return linteger_create_from_long(osic, value);
+	}
+
+	self = linteger_create(osic, (int)strlen(cstr));
+	if (self) {
+		if (cstr[0] == '0') {
+			if (cstr[1] == 'x' || cstr[1] == 'X') {
+				extend_from_str(self->length,
+				                self->digits,
+				                cstr + 2,
+				                16,
+				                NULL);
+			} else {
+				extend_from_str(self->length,
+				                self->digits,
+				                cstr + 1,
+				                8,
+				                NULL);
+			}
+		} else {
+			extend_from_str(self->length,
+			                self->digits,
+			                cstr,
+			                10,
+			                NULL);
+		}
+		normalize(osic, self);
+	}
+
+	return self;
+}
+
+static struct lobject *
+linteger_type_method(struct osic *osic,
+                     struct lobject *self,
+                     int method, int argc, struct lobject *argv[])
+{
+	switch (method) {
+	case LOBJECT_METHOD_CALL: {
+		long value;
+
+		if (argc < 1) {
+			return linteger_create_from_long(osic, 0);
+		}
+
+		value = 0;
+		if (lobject_is_number(osic, argv[0])) {
+			value = (long)lnumber_to_double(osic, argv[0]);
+		}
+
+		if (lobject_is_string(osic, argv[0])) {
+			const char *cstr;
+
+			cstr = lstring_to_cstr(osic, argv[0]);
+			value = strtol(cstr, NULL, 10);
+		}
+
+		return linteger_create_from_long(osic, value);
+	}
+
+	case LOBJECT_METHOD_CALLABLE:
+		return osic->l_true;
+
+	default:
+		return lobject_default(osic, self, method, argc, argv);
+	}
+}
+
+struct ltype *
+linteger_type_create(struct osic *osic)
+{
+	struct ltype *type;
+
+	type = ltype_create(osic,
+	                    "integer",
+	                    linteger_method,
+	                    linteger_type_method);
+	if (type) {
+		osic_add_global(osic, "integer", type);
+	}
+
+	return type;
+}
+
