@@ -2,14 +2,22 @@
 
 ### Chapter 1 - Overview
 
+OSIC can run as a live interpreter.
+Just run `./osic` to run it.
 
-#### 1.2 Print stuff
+It can handle simple command and reduce a direct output.
 
 print 'hello,world' from OSIC shell, `print` can print any OSIC object.
 
-	>>> print('hello,world');
-	hello,world
+	>>> print('Hello ,World!');
+	Hello ,World!
 	>>> 
+
+You can also run OSIC as Interpreter by use a source file:
+
+`./osic yourSourceFile.osic`
+
+ 
 ### Chapter 2 - Variables and Types
 
 #### 2.1 Variable declare.
@@ -41,8 +49,8 @@ multiple variable declare can't set value.
 Integer is basic type of OSIC, It's represent any integer from very little to very big. The whole integer range limit is depends on memory, example
 
 	100;
-	18446744073709551616;
-	340282366920938463463374607431768211456;
+	198098907786758567876786;
+	2587658768798907095875476986789;
 
 all validate integer.
 
@@ -50,15 +58,15 @@ all validate integer.
 
 Number is float pointer, OSIC's implement number use double, example
 
-	10.1;
-	.5;
+	11.2;
+	.6;
 
 ##### 2.2.3 string
 
 String is array of byte, define string within `'` or `"`, example
 
-	'hello,world'
-	"hello,world"
+	'Hello, World!'
+	"Hello, World!"
 
 String use escape to encode special char, example
 
@@ -619,18 +627,18 @@ And beware of reference type in class, this may cause some confuse, example
 	}
 
 	var a1 = A();
-	a1.names.append('Zhicheng');
+	a1.names.append('Foo');
 
 	var a2 = A();
-	a2.names.append('John');
+	a2.names.append('Bar');
 	print(a1.names);
 	print(a2.names);
 
-Both `a1.names` and `a2.names` is `['Zhicheng', 'John']`, because names is class A's attribute. set instance's attribute in `__init__` .
+Both `a1.names` and `a2.names` is `['Foo', 'Bar']`, because names is class A's attribute. set instance's attribute in `__init__` .
 
-### Chapter 8 - Exception
+### Chapter 8 - Exceptionhandling
 
-#### 8.1 throw
+#### 8.1 throw an exception
 
 Syntax
 
@@ -676,10 +684,10 @@ The finally `stmts5` always run, after `stms1` or any of catch catched.the catch
 
 Syntax
 
-	import 'hello.osic';
-	import './hello.osic';
-	import '../hello.osic';
-	import '/Users/zhicheng/hello.osic';
+	import 'helloWorld.osic';
+	import './hello_world.osic';
+	import '../helloWORLD.osic';
+	import '/Users/someUser/helloWorld.osic';
 
 OSIC have four path resolve,
 
@@ -914,27 +922,3 @@ Demo from wikipedia. [Continuation - Wikipedia](https://en.wikipedia.org/wiki/Co
 	print(test());
 	print(the_continuation());
 	print(another_continuation());
-
-## Part III - The C API
-
-### Chapter 14 - Input and Compile
-
-#### 14.1 initialize and set parameter
-
-Example from `main.c`
-
-	struct OSIC *OSIC;
-	OSIC = OSIC_create();
-	builtin_init(OSIC);
-
-	lobject_set_item(OSIC, 
-			 OSIC->l_modules,
-			 lstring_create(OSIC, "os", 2),
-			 os_module(OSIC));
-	OSIC_input_set_file(OSIC, "code.osic");
-	OSIC_compile(OSIC);
-	OSIC_machine_reset(OSIC);
-	OSIC_machine_execute(OSIC);
-
-
-Everything start with `OSIC_create()`, this function initialize all party of OSIC, and required object.  after `OSIC_create` initialize module with `builtin_init`, and manual initialize `os_module`, there is the place you add custom module.  use `OSIC_input_set_file` set OSIC source code file or `OSIC_input_set_buffer` set source code from string instead file.  use `OSIC_compile` compile source code, use `OSIC_machine_reset` reset machine and finally `OSIC_machine_execute` execute code. all part is done.

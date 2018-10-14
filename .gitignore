@@ -12,10 +12,15 @@
 **/.factorypath
 **/MANIFEST.MF
 
+# NetbeanFiles
+**/nbproject/*
+**/obj/*
+
 # project files
 **/target/
 
 # caching files
 **/*.db
 /bin/
+**/*.so
 

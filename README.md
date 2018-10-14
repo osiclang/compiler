@@ -1,6 +1,7 @@
 
 <img src="https://github.com/OSIClang/compiler/blob/master/logo/osic-owl-text.png" width="200">
-OSIC Compiler is a compiler for the OSIC language. OSIC stands for Objectiv Symbolic Instruction Code and should be completely compilable to a wide spectrum of machines in addition to a programming language that is very easy to learn.
+OSIC Compiler is a compiler for the OSIC language. OSIC stands for Objectiv Symbolic Instruction Code and should be 
+completely compilable to a wide spectrum of machines in addition to a programming language that is very easy to learn.
 
 ### Docs
 
@@ -64,16 +65,32 @@ mingw32-make
 
 `lib/os.c` and `lib/socket.c` are supporting POSIX and Microsoft Windows environment. Ensure you have a compatible Windows Build environment installed.
 
-# Roadmap
-- :heavy_check_mark: Add print and input
-- :heavy_check_mark: Add handling for methods
-- :x: Add Writer commands to write files and send via network
-- :x: Add Reader to read files and recieve request on ports
-- :x: The language must pass the touring test
-- :heavy_check_mark: Remove eclipse depencies - it should use his own code parser
-- :x: Add Packagehandling
-- :x: Add ability to work with classes and new instances of it
-- :x: final: Rewrite Code to make him compile himself!
+### Use OSIC as compiler
+
+initialize and set parameter to your source code
+
+Example from `main.c`
+
+	struct osic *osic;
+	osic = osic_create();
+	builtin_init(osic);
+
+	lobject_set_item(osic, 
+			 osic->l_modules,
+			 lstring_create(osic, "os", 2),
+			 os_module(osic));
+	osic_input_set_file(OSIC, "your_osic_source.osic");
+	osic_compile(OSIC);
+	osic_machine_reset(OSIC);
+	osic_machine_execute(OSIC);
+
+Everything start with `osic_create()`, this function initialize all parts of OSIC, 
+and all required objects. After `osic_create` initialize module 
+with `builtin_init`, and manual initialize `os_module`, there is the place you add custom module.  
+Use `osic_input_set_file` set OSIC source code file or `osic_input_set_buffer` set source code from string instead file.  
+Use `osic_compile` compile source code, use `osic_machine_reset` reset machine and finally `osic_machine_execute` execute code. 
+
+This is not the final way. It would changed in the future.
 
 # Add your Review (a little checklist)
 - Make sure that methods of styling are similar to already existing related methods. Look at POJO's and helpers. This ensures that the code has a readable style.
