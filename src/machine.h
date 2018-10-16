@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "osic.h"
-#include "lframe.h"
+#include "oFrame.h"
 
 struct machine {
 	int pc; /* program counter */
@@ -22,13 +22,13 @@ struct machine {
 
 	unsigned char *code;
 
-	struct lframe *pause;
+	struct oframe *pause;
 
-	struct lframe **frame;
-	struct lobject **stack;
-	struct lobject **cpool;
+	struct oframe **frame;
+	struct oobject **stack;
+	struct oobject **cpool;
 
-	struct lobject *exception;
+	struct oobject *exception;
 };
 
 struct machine *
@@ -41,9 +41,9 @@ void
 machine_reset(struct osic *osic);
 
 int
-machine_add_const(struct osic *osic, struct lobject *object);
+machine_add_const(struct osic *osic, struct oobject *object);
 
-struct lobject *
+struct oobject *
 machine_get_const(struct osic *osic, int pool);
 
 int
@@ -58,47 +58,47 @@ machine_add_code4(struct osic *osic, int value);
 int
 machine_set_code4(struct osic *osic, int location, int value);
 
-struct lobject *
+struct oobject *
 machine_pop_object(struct osic *osic);
 
 void
-machine_push_object(struct osic *osic, struct lobject *object);
+machine_push_object(struct osic *osic, struct oobject *object);
 
-struct lframe *
+struct oframe *
 osic_machine_push_new_frame(struct osic *osic,
-                             struct lobject *self,
-                             struct lobject *callee,
-                             lframe_call_t callback,
+                             struct oobject *self,
+                             struct oobject *callee,
+                             oframe_call_t callback,
                              int nlocals);
 
 /*
  * pop out all top frame with callback
  */
-struct lobject *
+struct oobject *
 machine_return_frame(struct osic *osic,
-                     struct lobject *retval);
+                     struct oobject *retval);
 
 void
 machine_push_frame(struct osic *osic,
-                   struct lframe *frame);
+                   struct oframe *frame);
 
-struct lframe *
+struct oframe *
 machine_peek_frame(struct osic *osic);
 
-struct lframe *
+struct oframe *
 machine_pop_frame(struct osic *osic);
 
 void
 machine_store_frame(struct osic *osic,
-                    struct lframe *frame);
+                    struct oframe *frame);
 
 void
 machine_restore_frame(struct osic *osic,
-                      struct lframe *frame);
+                      struct oframe *frame);
 
-struct lobject *
+struct oobject *
 machine_throw(struct osic *osic,
-              struct lobject *object);
+              struct oobject *object);
 
 void
 machine_disassemble(struct osic *osic);

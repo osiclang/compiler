@@ -129,7 +129,7 @@ struct syntax {
 	 * 2, to dictionary, 'define func(var a, var b, var **c)'
 	 *    turn all keyword argument after b into dictionary c
 	 *
-	 * see lfunction.h
+	 * see ofunction.h
 	 *
 	 */
 	int parameter_type;

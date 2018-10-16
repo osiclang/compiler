@@ -1,87 +1,87 @@
 #include "osic.h"
 #include "builtin.h"
-#include "larray.h"
-#include "lstring.h"
-#include "linteger.h"
-#include "literator.h"
+#include "oArray.h"
+#include "oString.h"
+#include "oInteger.h"
+#include "oIterator.h"
 
 #include <stdio.h>
 #include <string.h>
 
-static struct lobject *
+static struct oobject *
 builtin_print_string_callback(struct osic *osic,
-                              struct lframe *frame,
-                              struct lobject *retval)
+                              struct oframe *frame,
+                              struct oobject *retval)
 {
-	struct lobject *strings;
+	struct oobject *strings;
 
-	if (!lobject_is_string(osic, retval)) {
+	if (!oobject_is_string(osic, retval)) {
 		const char *fmt;
 
 		fmt = "'__string__()' return non-string";
-		return lobject_error_type(osic, fmt);
+		return oobject_error_type(osic, fmt);
 	}
-	strings = lframe_get_item(osic, frame, 0);
+	strings = oframe_get_item(osic, frame, 0);
 
-	return larray_append(osic, strings, 1, &retval);
+	return oarray_append(osic, strings, 1, &retval);
 }
 
-static struct lobject *
+static struct oobject *
 builtin_print_object(struct osic *osic,
                      long i,
-                     struct lobject *objects,
-                     struct lobject *strings);
+                     struct oobject *objects,
+                     struct oobject *strings);
 
-static struct lobject *
+static struct oobject *
 builtin_print_callback(struct osic *osic,
-                       struct lframe *frame,
-                       struct lobject *retval)
+                       struct oframe *frame,
+                       struct oobject *retval)
 {
 	long i;
-	struct lobject *offset;
-	struct lobject *string;
-	struct lobject *objects;
-	struct lobject *strings;
+	struct oobject *offset;
+	struct oobject *string;
+	struct oobject *objects;
+	struct oobject *strings;
 
-	offset = lframe_get_item(osic, frame, 0);
-	objects = lframe_get_item(osic, frame, 1);
-	strings = lframe_get_item(osic, frame, 2);
+	offset = oframe_get_item(osic, frame, 0);
+	objects = oframe_get_item(osic, frame, 1);
+	strings = oframe_get_item(osic, frame, 2);
 
-	i = linteger_to_long(osic, offset);
-	if (i < larray_length(osic, objects)) {
+	i = ointeger_to_long(osic, offset);
+	if (i < oarray_length(osic, objects)) {
 		return builtin_print_object(osic, i, objects, strings);
 	}
 
 	/* finish strings */
-	for (i = 0; i < larray_length(osic, strings) - 1; i++) {
-		string = larray_get_item(osic, strings, i);
-		printf("%s ", lstring_to_cstr(osic, string));
+	for (i = 0; i < oarray_length(osic, strings) - 1; i++) {
+		string = oarray_get_item(osic, strings, i);
+		printf("%s ", ostring_to_cstr(osic, string));
 	}
-	string = larray_get_item(osic, strings, i);
-	printf("%s\n", lstring_to_cstr(osic, string));
+	string = oarray_get_item(osic, strings, i);
+	printf("%s\n", ostring_to_cstr(osic, string));
 
 	return osic->l_nil;
 }
 
-static struct lobject *
+static struct oobject *
 builtin_print_instance(struct osic *osic,
-                       struct lobject *object,
-                       struct lobject *strings)
+                       struct oobject *object,
+                       struct oobject *strings)
 {
-	struct lframe *frame;
-	struct lobject *function;
+	struct oframe *frame;
+	struct oobject *function;
 
-	function = lobject_default_get_attr(osic,
+	function = oobject_default_get_attr(osic,
 	                                    object,
 	                                    osic->l_string_string);
 	if (!function) {
 		const char *fmt;
 
 		fmt = "'%@' has no attribute '__string__()'";
-		return lobject_error_type(osic, fmt, object);
+		return oobject_error_type(osic, fmt, object);
 	}
 
-	if (lobject_is_error(osic, function)) {
+	if (oobject_is_error(osic, function)) {
 		return function;
 	}
 
@@ -93,21 +93,21 @@ builtin_print_instance(struct osic *osic,
 	if (!frame) {
 		return NULL;
 	}
-	lframe_set_item(osic, frame, 0, strings);
+	oframe_set_item(osic, frame, 0, strings);
 
-	return lobject_call(osic, function, 0, NULL);
+	return oobject_call(osic, function, 0, NULL);
 }
 
-static struct lobject *
+static struct oobject *
 builtin_print_object(struct osic *osic,
                      long i,
-                     struct lobject *objects,
-                     struct lobject *strings)
+                     struct oobject *objects,
+                     struct oobject *strings)
 {
-	struct lframe *frame;
-	struct lobject *offset;
-	struct lobject *object;
-	struct lobject *string;
+	struct oframe *frame;
+	struct oobject *offset;
+	struct oobject *object;
+	struct oobject *string;
 
 	frame = osic_machine_push_new_frame(osic,
 	                                     NULL,
@@ -118,41 +118,41 @@ builtin_print_object(struct osic *osic,
 		return NULL;
 	}
 
-	offset = linteger_create_from_long(osic, i + 1);
-	lframe_set_item(osic, frame, 0, offset);
-	lframe_set_item(osic, frame, 1, objects);
-	lframe_set_item(osic, frame, 2, strings);
+	offset = ointeger_create_from_long(osic, i + 1);
+	oframe_set_item(osic, frame, 0, offset);
+	oframe_set_item(osic, frame, 1, objects);
+	oframe_set_item(osic, frame, 2, strings);
 
-	object = larray_get_item(osic, objects, i);
+	object = oarray_get_item(osic, objects, i);
 
 	/*
 	 * instance object use `__string__' attr
 	 */
-	if (lobject_is_instance(osic, object)) {
+	if (oobject_is_instance(osic, object)) {
 		return builtin_print_instance(osic, object, strings);
 	}
 
 	/*
-	 * non-instance object use `lobject_string'
+	 * non-instance object use `oobject_string'
 	 */
-	string = lobject_string(osic, object);
+	string = oobject_string(osic, object);
 
-	return larray_append(osic, strings, 1, &string);
+	return oarray_append(osic, strings, 1, &string);
 }
 
-static struct lobject *
+static struct oobject *
 builtin_print(struct osic *osic,
-              struct lobject *self,
-              int argc, struct lobject *argv[])
+              struct oobject *self,
+              int argc, struct oobject *argv[])
 {
-	struct lobject *objects;
-	struct lobject *strings;
+	struct oobject *objects;
+	struct oobject *strings;
 
-	objects = larray_create(osic, argc, argv);
+	objects = oarray_create(osic, argc, argv);
 	if (!objects) {
 		return NULL;
 	}
-	strings = larray_create(osic, 0, NULL);
+	strings = oarray_create(osic, 0, NULL);
 	if (!strings) {
 		return NULL;
 	}
@@ -160,10 +160,10 @@ builtin_print(struct osic *osic,
 	return builtin_print_object(osic, 0, objects, strings);
 }
 
-static struct lobject *
+static struct oobject *
 builtin_input(struct osic *osic,
-              struct lobject *self,
-              int argc, struct lobject *argv[])
+              struct oobject *self,
+              int argc, struct oobject *argv[])
 {
 	char *p;
 	const char *fmt;
@@ -172,16 +172,16 @@ builtin_input(struct osic *osic,
 
 	if (argc > 1) {
 		fmt = "input() take 1 string argument";
-		return lobject_error_argument(osic, fmt);
+		return oobject_error_argument(osic, fmt);
 	}
 
-	if (argc && !lobject_is_string(osic, argv[0])) {
+	if (argc && !oobject_is_string(osic, argv[0])) {
 		fmt = "input() take 1 string argument";
-		return lobject_error_argument(osic, fmt);
+		return oobject_error_argument(osic, fmt);
 	}
 
 	if (argc) {
-		cstr = lstring_to_cstr(osic, argv[0]);
+		cstr = ostring_to_cstr(osic, argv[0]);
 		printf("%s", cstr);
 	}
 
@@ -195,32 +195,32 @@ builtin_input(struct osic *osic,
 		while (p[length--] == '\n') {
 		}
 		if (length > 0) {
-			return lstring_create(osic, p, length);
+			return ostring_create(osic, p, length);
 		}
 	}
 
 	return osic->l_empty_string;
 }
 
-static struct lobject *
+static struct oobject *
 builtin_map_item_callback(struct osic *osic,
-                          struct lframe *frame,
-                          struct lobject *retval)
+                          struct oframe *frame,
+                          struct oobject *retval)
 {
 	long i;
-	struct lobject *object;
-	struct lobject *callable;
-	struct lobject *iterable;
+	struct oobject *object;
+	struct oobject *callable;
+	struct oobject *iterable;
 
-	if (!larray_append(osic, frame->self, 1, &retval)) {
+	if (!oarray_append(osic, frame->self, 1, &retval)) {
 		return NULL;
 	}
 
 	callable = frame->callee;
-	iterable = lframe_get_item(osic, frame, 0);
-	i = larray_length(osic, frame->self);
-	if (i < larray_length(osic, iterable)) {
-		object = larray_get_item(osic, iterable, i);
+	iterable = oframe_get_item(osic, frame, 0);
+	i = oarray_length(osic, frame->self);
+	if (i < oarray_length(osic, iterable)) {
+		object = oarray_get_item(osic, iterable, i);
 		frame = osic_machine_push_new_frame(osic,
 		                                     frame->self,
 		                                     callable,
@@ -229,32 +229,32 @@ builtin_map_item_callback(struct osic *osic,
 		if (!frame) {
 			return NULL;
 		}
-		lframe_set_item(osic, frame, 0, iterable);
+		oframe_set_item(osic, frame, 0, iterable);
 
-		return lobject_call(osic, callable, 1, &object);
+		return oobject_call(osic, callable, 1, &object);
 	}
 
-	return larray_create(osic, 0, NULL);
+	return oarray_create(osic, 0, NULL);
 }
 
-static struct lobject *
+static struct oobject *
 builtin_map_array_callback(struct osic *osic,
-                           struct lframe *frame,
-                           struct lobject *retval)
+                           struct oframe *frame,
+                           struct oobject *retval)
 {
 	return frame->self;
 }
 
-static struct lobject *
+static struct oobject *
 builtin_map_array(struct osic *osic,
-                  struct lobject *callable,
-                  struct lobject *iterable)
+                  struct oobject *callable,
+                  struct oobject *iterable)
 {
-	struct lframe *frame;
-	struct lobject *array;
-	struct lobject *object;
+	struct oframe *frame;
+	struct oobject *array;
+	struct oobject *object;
 
-	array = larray_create(osic, 0, NULL);
+	array = oarray_create(osic, 0, NULL);
 	if (!array) {
 		return NULL;
 	}
@@ -275,20 +275,20 @@ builtin_map_array(struct osic *osic,
 	if (!frame) {
 		return NULL;
 	}
-	lframe_set_item(osic, frame, 0, iterable);
+	oframe_set_item(osic, frame, 0, iterable);
 
-	object = larray_get_item(osic, iterable, 0);
+	object = oarray_get_item(osic, iterable, 0);
 	if (!object) {
 		return NULL;
 	}
 
-	return lobject_call(osic, callable, 1, &object);
+	return oobject_call(osic, callable, 1, &object);
 }
 
-static struct lobject *
+static struct oobject *
 builtin_map_iterable_callback(struct osic *osic,
-                              struct lframe *frame,
-                              struct lobject *retval)
+                              struct oframe *frame,
+                              struct oobject *retval)
 {
 	if (frame->self != osic->l_nil) {
 		return builtin_map_array(osic, frame->self, retval);
@@ -297,12 +297,12 @@ builtin_map_iterable_callback(struct osic *osic,
 	return retval;
 }
 
-static struct lobject *
+static struct oobject *
 builtin_map_iterable(struct osic *osic,
-                     struct lobject *function,
-                     struct lobject *iterable)
+                     struct oobject *function,
+                     struct oobject *iterable)
 {
-	struct lframe *frame;
+	struct oframe *frame;
 
 	frame = osic_machine_push_new_frame(osic,
 	                                     function,
@@ -313,25 +313,25 @@ builtin_map_iterable(struct osic *osic,
 		return NULL;
 	}
 
-	return literator_to_array(osic, iterable, 0);
+	return oiterator_to_array(osic, iterable, 0);
 }
 
-struct lobject *
+struct oobject *
 builtin_map(struct osic *osic,
-            struct lobject *self,
-            int argc, struct lobject *argv[])
+            struct oobject *self,
+            int argc, struct oobject *argv[])
 {
-	struct lobject *callable;
-	struct lobject *iterable;
+	struct oobject *callable;
+	struct oobject *iterable;
 
 	if (argc != 2) {
-		return lobject_error_argument(osic,
+		return oobject_error_argument(osic,
 		                              "'map()' require 2 arguments");
 	}
 
 	callable = argv[0];
 	iterable = argv[1];
-	if (lobject_is_array(osic, iterable)) {
+	if (oobject_is_array(osic, iterable)) {
 		return builtin_map_array(osic, callable, iterable);
 	}
 
@@ -342,21 +342,21 @@ void
 builtin_init(struct osic *osic)
 {
 	char *cstr;
-	struct lobject *name;
-	struct lobject *function;
+	struct oobject *name;
+	struct oobject *function;
 
 	cstr = "map";
-	name = lstring_create(osic, cstr, strlen(cstr));
-	function = lfunction_create(osic, name, NULL, builtin_map);
+	name = ostring_create(osic, cstr, strlen(cstr));
+	function = ofunction_create(osic, name, NULL, builtin_map);
 	osic_add_global(osic, cstr, function);
 
 	cstr = "print";
-	name = lstring_create(osic, cstr, strlen(cstr));
-	function = lfunction_create(osic, name, NULL, builtin_print);
+	name = ostring_create(osic, cstr, strlen(cstr));
+	function = ofunction_create(osic, name, NULL, builtin_print);
 	osic_add_global(osic, cstr, function);
 
 	cstr = "input";
-	name = lstring_create(osic, cstr, strlen(cstr));
-	function = lfunction_create(osic, name, NULL, builtin_input);
+	name = ostring_create(osic, cstr, strlen(cstr));
+	function = ofunction_create(osic, name, NULL, builtin_input);
 	osic_add_global(osic, cstr, function);
 }

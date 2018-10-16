@@ -2,18 +2,18 @@
 #include "operative_code.h"
 #include "machine.h"
 #include "allocator.h"
-#include "collector.h"
-#include "lkarg.h"
-#include "lvarg.h"
-#include "lvkarg.h"
-#include "larray.h"
-#include "lclass.h"
-#include "lsuper.h"
-#include "lmodule.h"
-#include "lstring.h"
-#include "linteger.h"
-#include "literator.h"
-#include "ldictionary.h"
+#include "lib/garbagecollector.h"
+#include "oKarg.h"
+#include "oVarg.h"
+#include "oVkarg.h"
+#include "oArray.h"
+#include "oClass.h"
+#include "oSuper.h"
+#include "oModule.h"
+#include "oString.h"
+#include "oInteger.h"
+#include "oIterator.h"
+#include "oDict.h"
 
 #include <stdio.h>
 #include <assert.h>
@@ -45,21 +45,21 @@ machine_create(struct osic *osic)
 	}
 	memset(machine->code, 0, size);
 
-	size = sizeof(struct lobject *) * machine->cpoollen;
+	size = sizeof(struct oobject *) * machine->cpoollen;
 	machine->cpool = allocator_alloc(osic, size);
 	if (!machine->cpool) {
 		return NULL;
 	}
 	memset(machine->cpool, 0, size);
 
-	size = sizeof(struct lframe *) * machine->framelen;
+	size = sizeof(struct oframe *) * machine->framelen;
 	machine->frame = allocator_alloc(osic, size);
 	if (!machine->frame) {
 		return NULL;
 	}
 	memset(machine->frame, 0, size);
 
-	size = sizeof(struct lobject *) * machine->stacklen;
+	size = sizeof(struct oobject *) * machine->stacklen;
 	machine->stack = allocator_alloc(osic, size);
 	if (!machine->stack) {
 		return NULL;
@@ -209,7 +209,7 @@ machine_fetch_code4(struct osic *osic)
 }
 
 int
-machine_add_const(struct osic *osic, struct lobject *object)
+machine_add_const(struct osic *osic, struct oobject *object)
 {
 	int i;
 	struct machine *machine;
@@ -226,10 +226,10 @@ machine_add_const(struct osic *osic, struct lobject *object)
 			return i;
 		}
 
-		if (lobject_is_pointer(osic, object) &&
-		    lobject_is_pointer(osic, machine->cpool[i]) &&
+		if (oobject_is_pointer(osic, object) &&
+		    oobject_is_pointer(osic, machine->cpool[i]) &&
 		    object->l_method == machine->cpool[i]->l_method &&
-		    lobject_is_equal(osic, object, machine->cpool[i]))
+		    oobject_is_equal(osic, object, machine->cpool[i]))
 		{
 			return i;
 		}
@@ -238,7 +238,7 @@ machine_add_const(struct osic *osic, struct lobject *object)
 	return 0;
 }
 
-struct lobject *
+struct oobject *
 machine_get_const(struct osic *osic, int pool)
 {
 	struct machine *machine;
@@ -247,21 +247,21 @@ machine_get_const(struct osic *osic, int pool)
 	return machine->cpool[pool];
 }
 
-struct lobject *
+struct oobject *
 machine_stack_underflow(struct osic *osic)
 {
-	struct lobject *error;
+	struct oobject *error;
 
-	error = lobject_error_runtime(osic, "stack underflow");
+	error = oobject_error_runtime(osic, "stack underflow");
 	return machine_throw(osic, error);
 }
 
-struct lobject *
+struct oobject *
 machine_stack_overflow(struct osic *osic)
 {
-	struct lobject *error;
+	struct oobject *error;
 
-	error = lobject_error_runtime(osic, "stack overflow");
+	error = oobject_error_runtime(osic, "stack overflow");
 	return machine_throw(osic, error);
 }
 
@@ -285,10 +285,10 @@ machine_frame_overflow(struct osic *osic)
 	printf("machine frame overflow");
 }
 
-struct lobject *
+struct oobject *
 machine_out_of_memory(struct osic *osic)
 {
-	struct lobject *error;
+	struct oobject *error;
 
 	error = osic->l_out_of_memory;
 	return machine_throw(osic, error);
@@ -372,7 +372,7 @@ osic_machine_set_sp(struct osic *osic, int sp)
 	machine->sp = sp;
 }
 
-struct lframe *
+struct oframe *
 osic_machine_get_frame(struct osic *osic, int fp)
 {
 	struct machine *machine;
@@ -386,7 +386,7 @@ osic_machine_get_frame(struct osic *osic, int fp)
 }
 
 void
-osic_machine_set_frame(struct osic *osic, int fp, struct lframe *frame)
+osic_machine_set_frame(struct osic *osic, int fp, struct oframe *frame)
 {
 	struct machine *machine;
 
@@ -396,7 +396,7 @@ osic_machine_set_frame(struct osic *osic, int fp, struct lframe *frame)
 	}
 }
 
-struct lobject *
+struct oobject *
 osic_machine_get_stack(struct osic *osic, int sp)
 {
 	struct machine *machine;
@@ -410,10 +410,10 @@ osic_machine_get_stack(struct osic *osic, int sp)
 }
 
 void
-machine_push_object(struct osic *osic, struct lobject *object)
+machine_push_object(struct osic *osic, struct oobject *object)
 {
 	struct machine *machine;
-	struct lobject **stack;
+	struct oobject **stack;
 
 	machine = osic->l_machine;
 	if (machine->sp < machine->stacklen - 1) {
@@ -421,7 +421,7 @@ machine_push_object(struct osic *osic, struct lobject *object)
 	} else {
 		size_t size;
 
-		size = sizeof(struct lobject *) * machine->stacklen * 2;
+		size = sizeof(struct oobject *) * machine->stacklen * 2;
 		stack = allocator_realloc(osic, machine->stack, size);
 		if (stack) {
 			machine->stack = stack;
@@ -434,12 +434,12 @@ machine_push_object(struct osic *osic, struct lobject *object)
 }
 
 void
-osic_machine_push_object(struct osic *osic, struct lobject *object)
+osic_machine_push_object(struct osic *osic, struct oobject *object)
 {
 	machine_push_object(osic, object);
 }
 
-struct lobject *
+struct oobject *
 machine_pop_object(struct osic *osic)
 {
 	struct machine *machine;
@@ -454,25 +454,25 @@ machine_pop_object(struct osic *osic)
 	return NULL;
 }
 
-struct lobject *
+struct oobject *
 osic_machine_pop_object(struct osic *osic)
 {
 	return machine_pop_object(osic);
 }
 
-struct lframe *
+struct oframe *
 machine_push_new_frame(struct osic *osic,
-                       struct lobject *self,
-                       struct lobject *callee,
-                       lframe_call_t callback,
+                       struct oobject *self,
+                       struct oobject *callee,
+                       oframe_call_t callback,
                        int nlocals)
 {
-	struct lframe *frame;
+	struct oframe *frame;
 	struct machine *machine;
 
 	machine = osic->l_machine;
 	if (machine->fp < machine->framelen) {
-		frame = lframe_create(osic, self, callee, callback, nlocals);
+		frame = oframe_create(osic, self, callee, callback, nlocals);
 		if (frame) {
 			machine_store_frame(osic, frame);
 			machine_push_frame(osic, frame);
@@ -486,21 +486,21 @@ machine_push_new_frame(struct osic *osic,
 	return NULL;
 }
 
-struct lframe *
+struct oframe *
 osic_machine_push_new_frame(struct osic *osic,
-                             struct lobject *self,
-                             struct lobject *callee,
-                             lframe_call_t callback,
+                             struct oobject *self,
+                             struct oobject *callee,
+                             oframe_call_t callback,
                              int nlocals)
 {
 	return machine_push_new_frame(osic, self, callee, callback, nlocals);
 }
 
-struct lobject *
-machine_return_frame(struct osic *osic, struct lobject *retval)
+struct oobject *
+machine_return_frame(struct osic *osic, struct oobject *retval)
 {
 	struct machine *machine;
-	struct lframe *frame;
+	struct oframe *frame;
 
 	if (!retval) {
 		return osic->l_out_of_memory;
@@ -516,7 +516,7 @@ machine_return_frame(struct osic *osic, struct lobject *retval)
 			return osic->l_out_of_memory;
 		}
 
-		if (lobject_is_error(osic, retval)) {
+		if (oobject_is_error(osic, retval)) {
 			return retval;
 		}
 		machine_push_object(osic, retval);
@@ -525,14 +525,14 @@ machine_return_frame(struct osic *osic, struct lobject *retval)
 	return retval;
 }
 
-struct lobject *
-osic_machine_return_frame(struct osic *osic, struct lobject *retval)
+struct oobject *
+osic_machine_return_frame(struct osic *osic, struct oobject *retval)
 {
 	return machine_return_frame(osic, retval);
 }
 
 void
-machine_push_frame(struct osic *osic, struct lframe *frame)
+machine_push_frame(struct osic *osic, struct oframe *frame)
 {
 	struct machine *machine;
 
@@ -546,12 +546,12 @@ machine_push_frame(struct osic *osic, struct lframe *frame)
 }
 
 void
-osic_machine_push_frame(struct osic *osic, struct lframe *frame)
+osic_machine_push_frame(struct osic *osic, struct oframe *frame)
 {
 	machine_push_frame(osic, frame);
 }
 
-struct lframe *
+struct oframe *
 machine_peek_frame(struct osic *osic)
 {
 	struct machine *machine;
@@ -566,13 +566,13 @@ machine_peek_frame(struct osic *osic)
 	return NULL;
 }
 
-struct lframe *
+struct oframe *
 osic_machine_peek_frame(struct osic *osic)
 {
 	return machine_peek_frame(osic);
 }
 
-struct lframe *
+struct oframe *
 machine_pop_frame(struct osic *osic)
 {
 	struct machine *machine;
@@ -587,14 +587,14 @@ machine_pop_frame(struct osic *osic)
 	return NULL;
 }
 
-struct lframe *
+struct oframe *
 osic_machine_pop_frame(struct osic *osic)
 {
 	return machine_pop_frame(osic);
 }
 
 void
-machine_store_frame(struct osic *osic, struct lframe *frame)
+machine_store_frame(struct osic *osic, struct oframe *frame)
 {
 	struct machine *machine;
 
@@ -604,13 +604,13 @@ machine_store_frame(struct osic *osic, struct lframe *frame)
 }
 
 void
-osic_machine_store_frame(struct osic *osic, struct lframe *frame)
+osic_machine_store_frame(struct osic *osic, struct oframe *frame)
 {
 	machine_store_frame(osic, frame);
 }
 
 void
-machine_restore_frame(struct osic *osic, struct lframe *frame)
+machine_restore_frame(struct osic *osic, struct oframe *frame)
 {
 	struct machine *machine;
 
@@ -620,46 +620,46 @@ machine_restore_frame(struct osic *osic, struct lframe *frame)
 }
 
 void
-osic_machine_restore_frame(struct osic *osic, struct lframe *frame)
+osic_machine_restore_frame(struct osic *osic, struct oframe *frame)
 {
 	machine_restore_frame(osic, frame);
 }
 
-struct lobject *
+struct oobject *
 osic_machine_parse_args(struct osic *osic,
-                    struct lobject *callee,
-                    struct lframe *frame,
+                    struct oobject *callee,
+                    struct oframe *frame,
                     int define,
                     int nvalues,
                     int nparams,
-                    struct lobject *params[],
+                    struct oobject *params[],
                     int argc,
-                    struct lobject *argv[])
+                    struct oobject *argv[])
 {
 	int i;
 	int a; /* index of argv */
 	int local; /* index of frame->locals */
 	const char *fmt; /* error format string */
 
-	struct lobject *key;
-	struct lobject *arg;
+	struct oobject *key;
+	struct oobject *arg;
 
 	long v_argc;
-	struct lobject *v_arg;
-	struct lobject *v_args;
+	struct oobject *v_arg;
+	struct oobject *v_args;
 
 	int x_argc;
-	struct lobject *x_argv[256];
-	struct lobject *x_args;
+	struct oobject *x_argv[256];
+	struct oobject *x_args;
 
 	int x_kargc;
-	struct lobject *x_kargv[512];
-	struct lobject *x_kargs;
+	struct oobject *x_kargv[512];
+	struct oobject *x_kargs;
 
 	/* too many arguments */
 	if (define == 0 && argc > nparams) {
 		fmt = "%@() takes %d arguments (%d given)";
-		return lobject_error_argument(osic,
+		return oobject_error_argument(osic,
 		                              fmt,
 		                              callee,
 		                              nparams,
@@ -681,7 +681,7 @@ osic_machine_parse_args(struct osic *osic,
 
 #define machine_parse_args_set_arg(arg) do {                \
 	if (local < nparams) {                              \
-		lframe_set_item(osic,                      \
+		oframe_set_item(osic,                      \
 		                frame,                      \
 		                local++,                    \
 		                (arg));                     \
@@ -692,7 +692,7 @@ osic_machine_parse_args(struct osic *osic,
 		x_argv[x_argc++] = (arg);                   \
 	} else {                                            \
 		fmt = "%@() takes %d arguments (%d given)"; \
-		return lobject_error_argument(osic,        \
+		return oobject_error_argument(osic,        \
 		                              fmt,          \
 		                              callee,       \
 		                              nparams,      \
@@ -704,7 +704,7 @@ osic_machine_parse_args(struct osic *osic,
 	int j;                                                          \
 	int k = -1;                                                     \
 	for (j = 0; j < nparams; j++) {                                 \
-		if (lobject_is_equal(osic, params[j], key)) {          \
+		if (oobject_is_equal(osic, params[j], key)) {          \
 			k = j;                                          \
 			break;                                          \
 		}                                                       \
@@ -718,20 +718,20 @@ osic_machine_parse_args(struct osic *osic,
 			x_kargv[x_kargc++] = (arg);                     \
 		} else {                                                \
 			fmt = "'%@'() don't have parameter '%@'";       \
-			return lobject_error_argument(osic,            \
+			return oobject_error_argument(osic,            \
 			                              fmt,              \
 			                              callee,           \
 			                              (key));           \
 		}                                                       \
 	} else {                                                        \
-		if (lframe_get_item(osic, frame, k)) {                 \
+		if (oframe_get_item(osic, frame, k)) {                 \
 			fmt = "'%@' set multiple value parameter '%@'"; \
-			return lobject_error_argument(osic,            \
+			return oobject_error_argument(osic,            \
 			                              fmt,              \
 			                              callee,           \
 			                              (key));           \
 		}                                                       \
-		lframe_set_item(osic, frame, k, (arg));                \
+		oframe_set_item(osic, frame, k, (arg));                \
 	}                                                               \
 } while (0)
 
@@ -739,75 +739,75 @@ osic_machine_parse_args(struct osic *osic,
 	x_argc = 0;
 	for (a = 0;
 	     a < argc &&
-	     !lobject_is_karg(osic, argv[a]) &&
-	     !lobject_is_varg(osic, argv[a]) &&
-	     !lobject_is_vkarg(osic, argv[a]);
+	     !oobject_is_karg(osic, argv[a]) &&
+	     !oobject_is_varg(osic, argv[a]) &&
+	     !oobject_is_vkarg(osic, argv[a]);
 	     a++)
 	{
 		machine_parse_args_set_arg(argv[a]);
 	}
 
-	if (a < argc && lobject_is_varg(osic, argv[a])) {
-		v_args = ((struct lvarg *)argv[a++])->arguments;
+	if (a < argc && oobject_is_varg(osic, argv[a])) {
+		v_args = ((struct ovarg *)argv[a++])->arguments;
 
-		if (!lobject_is_array(osic, v_args)) {
+		if (!oobject_is_array(osic, v_args)) {
 			return NULL;
 		}
 
-		v_argc = larray_length(osic, v_args);
+		v_argc = oarray_length(osic, v_args);
 		for (i = 0; i < v_argc; i++) {
-			arg = larray_get_item(osic, v_args, i);
+			arg = oarray_get_item(osic, v_args, i);
 
 			machine_parse_args_set_arg(arg);
 		}
 	}
 
 	x_kargc = 0;
-	for (; a < argc && lobject_is_karg(osic, argv[a]); a++) {
-		key = ((struct lkarg *)argv[a])->keyword;
-		arg = ((struct lkarg *)argv[a])->argument;
+	for (; a < argc && oobject_is_karg(osic, argv[a]); a++) {
+		key = ((struct okarg *)argv[a])->keyword;
+		arg = ((struct okarg *)argv[a])->argument;
 
 		machine_parse_args_set_karg(key, arg);
 	}
 
-	if (a < argc && lobject_is_vkarg(osic, argv[a])) {
-		v_args = lobject_map_item(osic, argv[a]);
+	if (a < argc && oobject_is_vkarg(osic, argv[a])) {
+		v_args = oobject_map_item(osic, argv[a]);
 
-		assert(lobject_is_array(osic, v_args));
+		assert(oobject_is_array(osic, v_args));
 
-		v_argc = larray_length(osic, v_args);
+		v_argc = oarray_length(osic, v_args);
 		for (i = 0; i < v_argc; i++) {
-			v_arg = larray_get_item(osic, v_args, i);
+			v_arg = oarray_get_item(osic, v_args, i);
 
-			assert(lobject_is_array(osic, v_arg));
-			assert(larray_length(osic, v_arg) == 2);
+			assert(oobject_is_array(osic, v_arg));
+			assert(oarray_length(osic, v_arg) == 2);
 
-			key = larray_get_item(osic, v_arg, 0);
-			arg = larray_get_item(osic, v_arg, 1);
+			key = oarray_get_item(osic, v_arg, 0);
+			arg = oarray_get_item(osic, v_arg, 1);
 
 			machine_parse_args_set_karg(key, arg);
 		}
 	}
 
 	if (define == 1) {
-		x_args = larray_create(osic, x_argc, x_argv);
-		lframe_set_item(osic, frame, nparams, x_args);
+		x_args = oarray_create(osic, x_argc, x_argv);
+		oframe_set_item(osic, frame, nparams, x_args);
 	} else if (define == 2) {
-		x_kargs = ldictionary_create(osic, x_kargc, x_kargv);
-		lframe_set_item(osic, frame, nparams, x_kargs);
+		x_kargs = odict_create(osic, x_kargc, x_kargv);
+		oframe_set_item(osic, frame, nparams, x_kargs);
 	} else if (define == 3) {
-		x_args = larray_create(osic, x_argc, x_argv);
-		lframe_set_item(osic, frame, nparams++, x_args);
+		x_args = oarray_create(osic, x_argc, x_argv);
+		oframe_set_item(osic, frame, nparams++, x_args);
 
-		x_kargs = ldictionary_create(osic, x_kargc, x_kargv);
-		lframe_set_item(osic, frame, nparams, x_kargs);
+		x_kargs = odict_create(osic, x_kargc, x_kargv);
+		oframe_set_item(osic, frame, nparams, x_kargs);
 	}
 
 	/* check required args */
 	for (i = 0; i < nparams - nvalues; i++) {
-		if (lframe_get_item(osic, frame, i) == NULL) {
+		if (oframe_get_item(osic, frame, i) == NULL) {
 			fmt = "%@() takes %d arguments (%d given)";
-			return lobject_error_argument(osic,
+			return oobject_error_argument(osic,
 			                              fmt,
 			                              callee,
 			                              nparams,
@@ -817,33 +817,33 @@ osic_machine_parse_args(struct osic *osic,
 
 	/* set sentinel for optional args */
 	for (; i < nparams; i++) {
-		if (lframe_get_item(osic, frame, i) == NULL) {
-			lframe_set_item(osic, frame, i, osic->l_sentinel);
+		if (oframe_get_item(osic, frame, i) == NULL) {
+			oframe_set_item(osic, frame, i, osic->l_sentinel);
 		}
 	}
 
 	/* set nil for non args */
 	for (; i < frame->nlocals; i++) {
-		if (lframe_get_item(osic, frame, i) == NULL) {
-			lframe_set_item(osic, frame, i, osic->l_nil);
+		if (oframe_get_item(osic, frame, i) == NULL) {
+			oframe_set_item(osic, frame, i, osic->l_nil);
 		}
 	}
 
 	return NULL;
 }
 
-struct lframe *
+struct oframe *
 machine_add_pause(struct osic *osic)
 {
-	struct lframe *frame;
-	struct lframe *oldframe;
+	struct oframe *frame;
+	struct oframe *oldframe;
 	struct machine *machine;
 
 	machine = osic->l_machine;
 	frame = osic_machine_push_new_frame(osic,
 	                                     NULL,
 	                                     NULL,
-	                                     lframe_default_callback,
+	                                     oframe_default_callback,
 	                                     0);
 	if (!frame) {
 	       machine->halt = 1;
@@ -857,13 +857,13 @@ machine_add_pause(struct osic *osic)
 	return oldframe;
 }
 
-struct lframe *
+struct oframe *
 osic_machine_add_pause(struct osic *osic)
 {
 	return machine_add_pause(osic);
 }
 
-struct lframe *
+struct oframe *
 machine_get_pause(struct osic *osic)
 {
 	struct machine *machine;
@@ -872,16 +872,16 @@ machine_get_pause(struct osic *osic)
 	return machine->pause;
 }
 
-struct lframe *
+struct oframe *
 osic_machine_get_pause(struct osic *osic)
 {
 	return machine_get_pause(osic);
 }
 
-struct lframe *
-machine_set_pause(struct osic *osic, struct lframe *frame)
+struct oframe *
+machine_set_pause(struct osic *osic, struct oframe *frame)
 {
-	struct lframe *oldframe;
+	struct oframe *oldframe;
 	struct machine *machine;
 
 	machine = osic->l_machine;
@@ -891,14 +891,14 @@ machine_set_pause(struct osic *osic, struct lframe *frame)
 	return oldframe;
 }
 
-struct lframe *
-osic_machine_set_pause(struct osic *osic, struct lframe *frame)
+struct oframe *
+osic_machine_set_pause(struct osic *osic, struct oframe *frame)
 {
 	return machine_set_pause(osic, frame);
 }
 
 void
-machine_del_pause(struct osic *osic, struct lframe *frame)
+machine_del_pause(struct osic *osic, struct oframe *frame)
 {
 	struct machine *machine;
 
@@ -907,21 +907,21 @@ machine_del_pause(struct osic *osic, struct lframe *frame)
 }
 
 void
-osic_machine_del_pause(struct osic *osic, struct lframe *frame)
+osic_machine_del_pause(struct osic *osic, struct oframe *frame)
 {
 	machine_del_pause(osic, frame);
 }
 
-struct lobject *
-machine_throw(struct osic *osic, struct lobject *exception)
+struct oobject *
+machine_throw(struct osic *osic, struct oobject *exception)
 {
 	int argc;
 	struct machine *machine;
 
-	struct lframe *frame;
-	struct lobject *argv[128];
+	struct oframe *frame;
+	struct oobject *argv[128];
 
-	exception = lobject_throw(osic, exception);
+	exception = oobject_throw(osic, exception);
 
 	argc = 0;
 	machine = osic->l_machine;
@@ -934,9 +934,9 @@ machine_throw(struct osic *osic, struct lobject *exception)
 			machine->pc = l_try;
 			machine->sp = frame->sp;
 			machine->exception = exception;
-			lobject_call_attr(osic,
+			oobject_call_attr(osic,
 			                  exception,
-			                  lstring_create(osic, "addtrace", 8),
+			                  ostring_create(osic, "addtrace", 8),
 			                  argc,
 			                  argv);
 
@@ -947,28 +947,28 @@ machine_throw(struct osic *osic, struct lobject *exception)
 		}
 		machine_pop_frame(osic);
 		machine_restore_frame(osic, frame);
-		argv[argc++] = (struct lobject *)frame;
+		argv[argc++] = (struct oobject *)frame;
 	}
 
 	printf("Uncaught Exception: ");
-	lobject_print(osic, exception, NULL);
-	lobject_call_attr(osic,
+	oobject_print(osic, exception, NULL);
+	oobject_call_attr(osic,
 	                  exception,
-	                  lstring_create(osic, "addtrace", 8),
+	                  ostring_create(osic, "addtrace", 8),
 	                  argc,
 	                  argv);
 
-	lobject_call_attr(osic,
+	oobject_call_attr(osic,
 	                  exception,
-	                  lstring_create(osic, "traceback", 9),
+	                  ostring_create(osic, "traceback", 9),
 	                  0,
 	                  NULL);
 	machine->halt = 1;
 	return machine_return_frame(osic, osic->l_nil);
 }
 
-struct lobject *
-osic_machine_throw(struct osic *osic, struct lobject *exception)
+struct oobject *
+osic_machine_throw(struct osic *osic, struct oobject *exception)
 {
 	return machine_throw(osic, exception);
 }
@@ -996,10 +996,10 @@ machine_extend_stack(struct osic *osic)
 {
 	size_t size;
 	struct machine *machine;
-	struct lobject **stack;
+	struct oobject **stack;
 
 	machine = osic->l_machine;
-	size = sizeof(struct lobject *) * machine->stacklen * 2;
+	size = sizeof(struct oobject *) * machine->stacklen * 2;
 	stack = allocator_realloc(osic, machine->stack, size);
 	if (stack) {
 		machine->stack = stack;
@@ -1014,27 +1014,27 @@ machine_extend_stack(struct osic *osic)
 	return 1;
 }
 
-struct lobject *
+struct oobject *
 machine_unpack_callback(struct osic *osic,
-                   struct lframe *frame,
-                   struct lobject *retval)
+                   struct oframe *frame,
+                   struct oobject *retval)
 {
 	long i;
 	long n;
 	long unpack;
-	struct lobject *last;
+	struct oobject *last;
 
-	n = larray_length(osic, retval);
-	unpack = linteger_to_long(osic, lframe_get_item(osic, frame, 0));
+	n = oarray_length(osic, retval);
+	unpack = ointeger_to_long(osic, oframe_get_item(osic, frame, 0));
 	if (n < unpack) {
 		last = osic->l_nil;
 	} else {
 		n -= 1;
-		last = larray_get_item(osic, retval, n);
+		last = oarray_get_item(osic, retval, n);
 	}
 
 	for (i = 0; i < n; i++) {
-		machine_push_object(osic, larray_get_item(osic, retval, i));
+		machine_push_object(osic, oarray_get_item(osic, retval, i));
 	}
 	for (; i < unpack - 1; i++) {
 		machine_push_object(osic, osic->l_nil);
@@ -1044,10 +1044,10 @@ machine_unpack_callback(struct osic *osic,
 	return last;
 }
 
-struct lobject *
-machine_unpack_iterable(struct osic *osic, struct lobject *iterable, int n)
+struct oobject *
+machine_unpack_iterable(struct osic *osic, struct oobject *iterable, int n)
 {
-	struct lframe *frame;
+	struct oframe *frame;
 
 	frame = machine_push_new_frame(osic,
 	                               NULL,
@@ -1057,23 +1057,23 @@ machine_unpack_iterable(struct osic *osic, struct lobject *iterable, int n)
 	if (!frame) {
 		return NULL;
 	}
-	lframe_set_item(osic, frame, 0, linteger_create_from_long(osic, n));
+	oframe_set_item(osic, frame, 0, ointeger_create_from_long(osic, n));
 
-	return literator_to_array(osic, iterable, n);
+	return oiterator_to_array(osic, iterable, n);
 }
 
-struct lobject *
+struct oobject *
 machine_varg_callback(struct osic *osic,
-                 struct lframe *frame,
-                 struct lobject *retval)
+                 struct oframe *frame,
+                 struct oobject *retval)
 {
-	return lvarg_create(osic, retval);
+	return ovarg_create(osic, retval);
 }
 
-struct lobject *
-machine_varg_iterable(struct osic *osic, struct lobject *iterable)
+struct oobject *
+machine_varg_iterable(struct osic *osic, struct oobject *iterable)
 {
-	struct lframe *frame;
+	struct oframe *frame;
 
 	frame = machine_push_new_frame(osic,
 	                               NULL,
@@ -1084,40 +1084,40 @@ machine_varg_iterable(struct osic *osic, struct lobject *iterable)
 		return NULL;
 	}
 
-	return literator_to_array(osic, iterable, 256);
+	return oiterator_to_array(osic, iterable, 256);
 }
 
-struct lobject *
+struct oobject *
 machine_call_getter(struct osic *osic,
-               struct lobject *getter,
-               struct lobject *self,
-               struct lobject *name,
-               struct lobject *value)
+               struct oobject *getter,
+               struct oobject *self,
+               struct oobject *name,
+               struct oobject *value)
 {
-	return lobject_call(osic, getter, 1, &value);
+	return oobject_call(osic, getter, 1, &value);
 }
 
-struct lobject *
+struct oobject *
 machine_setattr_callback(struct osic *osic,
-                    struct lframe *frame,
-                    struct lobject *retval)
+                    struct oframe *frame,
+                    struct oobject *retval)
 {
-	struct lobject *name;
+	struct oobject *name;
 
-	name = lframe_get_item(osic, frame, 0);
-	lobject_set_attr(osic, frame->self, name, retval);
+	name = oframe_get_item(osic, frame, 0);
+	oobject_set_attr(osic, frame->self, name, retval);
 
 	return retval;
 }
 
-struct lobject *
+struct oobject *
 machine_call_setter(struct osic *osic,
-               struct lobject *setter,
-               struct lobject *self,
-               struct lobject *name,
-               struct lobject *value)
+               struct oobject *setter,
+               struct oobject *self,
+               struct oobject *name,
+               struct oobject *value)
 {
-	struct lframe *frame;
+	struct oframe *frame;
 
 	frame = machine_push_new_frame(osic,
 	                               self,
@@ -1127,16 +1127,16 @@ machine_call_setter(struct osic *osic,
 	if (!frame) {
 		return NULL;
 	}
-	lframe_set_item(osic, frame, 0, name);
+	oframe_set_item(osic, frame, 0, name);
 
-	return lobject_call(osic, setter, 1, &value);
+	return oobject_call(osic, setter, 1, &value);
 }
 
 int
 osic_machine_execute(struct osic *osic)
 {
 	struct machine *machine;
-	struct lobject *object;
+	struct oobject *object;
 
 	machine = osic->l_machine;
 	machine->sp = -1;
@@ -1145,12 +1145,12 @@ osic_machine_execute(struct osic *osic)
 
 	osic_collector_enable(osic);
 	object = osic_machine_execute_loop(osic);
-	if (lobject_is_error(osic, object)) {
+	if (oobject_is_error(osic, object)) {
 		printf("Uncaught Exception: ");
-		lobject_print(osic, object, NULL);
-		lobject_call_attr(osic,
+		oobject_print(osic, object, NULL);
+		oobject_call_attr(osic,
 		                  object,
-		                  lstring_create(osic, "traceback", 9),
+		                  ostring_create(osic, "traceback", 9),
 		                  0,
 		                  NULL);
 	}
@@ -1161,7 +1161,7 @@ osic_machine_execute(struct osic *osic)
 	return 1;
 }
 
-struct lobject *
+struct oobject *
 osic_machine_execute_loop(struct osic *osic)
 {
 	int i;
@@ -1169,15 +1169,15 @@ osic_machine_execute_loop(struct osic *osic)
 	int operative_code;
 
 	struct machine *machine;
-	struct lframe *frame;
+	struct oframe *frame;
 
-	struct lobject *a; /* src value 1 or base value */
-	struct lobject *b; /* src value 2               */
-	struct lobject *c; /* src value 3 or dest value */
-	struct lobject *d; /* src value 4               */
-	struct lobject *e; /* src value 5 or exception value */
+	struct oobject *a; /* src value 1 or base value */
+	struct oobject *b; /* src value 2               */
+	struct oobject *c; /* src value 3 or dest value */
+	struct oobject *d; /* src value 4               */
+	struct oobject *e; /* src value 5 or exception value */
 
-	struct lobject *argv[256]; /* base value call arguments */
+	struct oobject *argv[256]; /* base value call arguments */
 
 #define CHECK_PAUSE(retval) do {                             \
 	if (machine->fp >= 0 &&                              \
@@ -1195,7 +1195,7 @@ osic_machine_execute_loop(struct osic *osic)
 } while (0)                                     \
 
 #define CHECK_ERROR(object) do {                  \
-	if (lobject_is_error(osic, (object))) {  \
+	if (oobject_is_error(osic, (object))) {  \
 		e = machine_throw(osic, object); \
 		CHECK_PAUSE(e);                   \
 		break;                            \
@@ -1205,7 +1205,7 @@ osic_machine_execute_loop(struct osic *osic)
 #define UNOP(m) do {                             \
 	if (machine->sp >= 0) {                  \
 		a = POP_OBJECT();                \
-		c = lobject_unop(osic, (m), a); \
+		c = oobject_unop(osic, (m), a); \
 		CHECK_NULL(c);                   \
 		CHECK_ERROR(c);                  \
 		PUSH_OBJECT(c);                  \
@@ -1218,7 +1218,7 @@ osic_machine_execute_loop(struct osic *osic)
 	if (machine->sp >= 1) {                      \
 		b = POP_OBJECT();                    \
 		a = POP_OBJECT();                    \
-		c = lobject_binop(osic, (m), a, b); \
+		c = oobject_binop(osic, (m), a, b); \
 		CHECK_NULL(c);                       \
 		CHECK_ERROR(c);                      \
 		PUSH_OBJECT(c);                      \
@@ -1292,59 +1292,59 @@ osic_machine_execute_loop(struct osic *osic)
 			break;
 
 		case OPERATIVE_CODE_POS:
-			UNOP(LOBJECT_METHOD_POS);
+			UNOP(OOBJECT_METHOD_POS);
 			break;
 
 		case OPERATIVE_CODE_NEG:
-			UNOP(LOBJECT_METHOD_NEG);
+			UNOP(OOBJECT_METHOD_NEG);
 			break;
 
 		case OPERATIVE_CODE_BNOT:
-			UNOP(LOBJECT_METHOD_BITWISE_NOT);
+			UNOP(OOBJECT_METHOD_BITWISE_NOT);
 			break;
 
 		case OPERATIVE_CODE_ADD:
-			BINOP(LOBJECT_METHOD_ADD);
+			BINOP(OOBJECT_METHOD_ADD);
 			break;
 
 		case OPERATIVE_CODE_SUB:
-			BINOP(LOBJECT_METHOD_SUB);
+			BINOP(OOBJECT_METHOD_SUB);
 			break;
 
 		case OPERATIVE_CODE_MUL:
-			BINOP(LOBJECT_METHOD_MUL);
+			BINOP(OOBJECT_METHOD_MUL);
 			break;
 
 		case OPERATIVE_CODE_DIV:
-			BINOP(LOBJECT_METHOD_DIV);
+			BINOP(OOBJECT_METHOD_DIV);
 			break;
 
 		case OPERATIVE_CODE_MOD:
-			BINOP(LOBJECT_METHOD_MOD);
+			BINOP(OOBJECT_METHOD_MOD);
 			break;
 
 		case OPERATIVE_CODE_SHL:
-			BINOP(LOBJECT_METHOD_SHL);
+			BINOP(OOBJECT_METHOD_SHL);
 			break;
 
 		case OPERATIVE_CODE_SHR:
-			BINOP(LOBJECT_METHOD_SHR);
+			BINOP(OOBJECT_METHOD_SHR);
 			break;
 
 		case OPERATIVE_CODE_EQ:
-			BINOP(LOBJECT_METHOD_EQ);
+			BINOP(OOBJECT_METHOD_EQ);
 			break;
 
 		case OPERATIVE_CODE_NE:
-			BINOP(LOBJECT_METHOD_NE);
+			BINOP(OOBJECT_METHOD_NE);
 			break;
 
 		case OPERATIVE_CODE_IN: {
 			CHECK_STACK(2);
 			a = POP_OBJECT();
 			b = POP_OBJECT();
-			c = lobject_binop(osic,
-			                  LOBJECT_METHOD_HAS_ITEM,
+			c = oobject_binop(osic,
+			                  OOBJECT_METHOD_HAS_ITEM,
 			                  a,
 			                  b);
 			CHECK_NULL(c);
@@ -1354,37 +1354,37 @@ osic_machine_execute_loop(struct osic *osic)
 		}
 
 		case OPERATIVE_CODE_LT:
-			BINOP(LOBJECT_METHOD_LT);
+			BINOP(OOBJECT_METHOD_LT);
 			break;
 
 		case OPERATIVE_CODE_LE:
-			BINOP(LOBJECT_METHOD_LE);
+			BINOP(OOBJECT_METHOD_LE);
 			break;
 
 		case OPERATIVE_CODE_GT:
-			BINOP(LOBJECT_METHOD_GT);
+			BINOP(OOBJECT_METHOD_GT);
 			break;
 
 		case OPERATIVE_CODE_GE:
-			BINOP(LOBJECT_METHOD_GE);
+			BINOP(OOBJECT_METHOD_GE);
 			break;
 
 		case OPERATIVE_CODE_BAND:
-			BINOP(LOBJECT_METHOD_BITWISE_AND);
+			BINOP(OOBJECT_METHOD_BITWISE_AND);
 			break;
 
 		case OPERATIVE_CODE_BOR:
-			BINOP(LOBJECT_METHOD_BITWISE_OR);
+			BINOP(OOBJECT_METHOD_BITWISE_OR);
 			break;
 
 		case OPERATIVE_CODE_BXOR:
-			BINOP(LOBJECT_METHOD_BITWISE_XOR);
+			BINOP(OOBJECT_METHOD_BITWISE_XOR);
 			break;
 
 		case OPERATIVE_CODE_LNOT:
 			CHECK_STACK(1);
 			a = POP_OBJECT();
-			if (lobject_boolean(osic, a) == osic->l_true) {
+			if (oobject_boolean(osic, a) == osic->l_true) {
 				PUSH_OBJECT(osic->l_false);
 			} else {
 				PUSH_OBJECT(osic->l_true);
@@ -1421,7 +1421,7 @@ osic_machine_execute_loop(struct osic *osic)
 			while (level-- > 0) {
 				frame = frame->upframe;
 			}
-			PUSH_OBJECT(lframe_get_item(osic, frame, local));
+			PUSH_OBJECT(oframe_get_item(osic, frame, local));
 			break;
 		}
 
@@ -1438,7 +1438,7 @@ osic_machine_execute_loop(struct osic *osic)
 			}
 			CHECK_STACK(1);
 			a = POP_OBJECT();
-			c = lframe_set_item(osic, frame, local, a);
+			c = oframe_set_item(osic, frame, local, a);
 			CHECK_NULL(c);
 			CHECK_ERROR(c);
 			break;
@@ -1459,10 +1459,10 @@ osic_machine_execute_loop(struct osic *osic)
 			n = FETCH_CODE1();
 			CHECK_STACK(1);
 			a = POP_OBJECT();
-			if (lobject_is_array(osic, a)) {
-				length = larray_length(osic, a);
+			if (oobject_is_array(osic, a)) {
+				length = oarray_length(osic, a);
 				for (i = 0; i < n && i < length; i++) {
-					c = larray_get_item(osic, a, i);
+					c = oarray_get_item(osic, a, i);
 					CHECK_NULL(c);
 					CHECK_ERROR(c);
 					PUSH_OBJECT(c);
@@ -1483,9 +1483,9 @@ osic_machine_execute_loop(struct osic *osic)
 			CHECK_STACK(2);
 			b = POP_OBJECT();
 			a = POP_OBJECT();
-			c = lobject_get_item(osic, a, b);
+			c = oobject_get_item(osic, a, b);
 			if (!c) {
-				c = lobject_error_item(osic,
+				c = oobject_error_item(osic,
 				                       "'%@' has no item '%@'",
 				                       a,
 				                       b);
@@ -1500,9 +1500,9 @@ osic_machine_execute_loop(struct osic *osic)
 			b = POP_OBJECT();
 			a = POP_OBJECT();
 			c = POP_OBJECT();
-			e = lobject_set_item(osic, a, b, c);
+			e = oobject_set_item(osic, a, b, c);
 			if (!e) {
-				e = lobject_error_item(osic,
+				e = oobject_error_item(osic,
 				                       "'%@' has no item '%@'",
 				                       a,
 				                       b);
@@ -1515,9 +1515,9 @@ osic_machine_execute_loop(struct osic *osic)
 			CHECK_STACK(2);
 			b = POP_OBJECT();
 			a = POP_OBJECT();
-			e = lobject_del_item(osic, a, b);
+			e = oobject_del_item(osic, a, b);
 			if (!e) {
-				e = lobject_error_item(osic,
+				e = oobject_error_item(osic,
 				                       "'%@' has no item '%@'",
 				                       a,
 				                       b);
@@ -1527,21 +1527,21 @@ osic_machine_execute_loop(struct osic *osic)
 		}
 
 		case OPERATIVE_CODE_GETATTR: {
-			struct lobject *getter;
+			struct oobject *getter;
 
 			CHECK_STACK(2);
 			b = POP_OBJECT(); /* name */
 			a = POP_OBJECT(); /* object */
-			c = lobject_default_get_attr(osic, a, b);
+			c = oobject_default_get_attr(osic, a, b);
 			if (!c) {
 				const char *fmt;
 
 				fmt = "'%@' has no attribute '%@'";
-				c = lobject_error_attribute(osic, fmt, a, b);
+				c = oobject_error_attribute(osic, fmt, a, b);
 			}
 			CHECK_ERROR(c);
 
-			getter = lobject_get_getter(osic, a, b);
+			getter = oobject_get_getter(osic, a, b);
 			if (getter) {
 				c = machine_call_getter(osic, getter, a, b, c);
 				CHECK_NULL(c);
@@ -1553,22 +1553,22 @@ osic_machine_execute_loop(struct osic *osic)
 		}
 
 		case OPERATIVE_CODE_SETATTR: {
-			struct lobject *setter;
+			struct oobject *setter;
 
 			CHECK_STACK(3);
 			b = POP_OBJECT(); /* name */
 			a = POP_OBJECT(); /* object */
 			c = POP_OBJECT(); /* value */
-			e = lobject_set_attr(osic, a, b, c);
+			e = oobject_set_attr(osic, a, b, c);
 			if (!e) {
 				const char *fmt;
 
 				fmt = "'%@' has no attribute '%@'";
-				e = lobject_error_attribute(osic, fmt, a, b);
+				e = oobject_error_attribute(osic, fmt, a, b);
 			}
 			CHECK_ERROR(e);
 
-			setter = lobject_get_setter(osic, a, b);
+			setter = oobject_get_setter(osic, a, b);
 			if (setter) {
 				e = machine_call_setter(osic, setter, a, b, c);
 				CHECK_NULL(e);
@@ -1582,12 +1582,12 @@ osic_machine_execute_loop(struct osic *osic)
 			CHECK_STACK(2);
 			b = POP_OBJECT();
 			a = POP_OBJECT();
-			e = lobject_del_attr(osic, a, b);
+			e = oobject_del_attr(osic, a, b);
 			if (!e) {
 				const char *fmt;
 
 				fmt = "'%@' has no attribute '%@'";
-				e = lobject_error_attribute(osic, fmt, a, b);
+				e = oobject_error_attribute(osic, fmt, a, b);
 			}
 			CHECK_ERROR(e);
 			break;
@@ -1599,7 +1599,7 @@ osic_machine_execute_loop(struct osic *osic)
 			c = POP_OBJECT();
 			b = POP_OBJECT();
 			a = POP_OBJECT();
-			c = lobject_get_slice(osic, a, b, c, d);
+			c = oobject_get_slice(osic, a, b, c, d);
 			CHECK_NULL(c);
 			CHECK_ERROR(c);
 			PUSH_OBJECT(c);
@@ -1613,7 +1613,7 @@ osic_machine_execute_loop(struct osic *osic)
 			c = POP_OBJECT();
 			b = POP_OBJECT();
 			a = POP_OBJECT();
-			e = lobject_set_slice(osic, a, b, c, d, e);
+			e = oobject_set_slice(osic, a, b, c, d, e);
 			CHECK_NULL(e);
 			CHECK_ERROR(e);
 			break;
@@ -1625,7 +1625,7 @@ osic_machine_execute_loop(struct osic *osic)
 			c = POP_OBJECT();
 			b = POP_OBJECT();
 			a = POP_OBJECT();
-			e = lobject_del_slice(osic, a, b, c, d);
+			e = oobject_del_slice(osic, a, b, c, d);
 			CHECK_NULL(e);
 			CHECK_ERROR(e);
 			break;
@@ -1647,9 +1647,9 @@ osic_machine_execute_loop(struct osic *osic)
 				argv[i] = POP_OBJECT();
 			}
 
-			e = lobject_method_call(osic,
+			e = oobject_method_call(osic,
 			                        a,
-			                        LOBJECT_METHOD_SET_GETTER,
+			                        OOBJECT_METHOD_SET_GETTER,
 			                        argc,
 			                        argv);
 			CHECK_NULL(e);
@@ -1673,9 +1673,9 @@ osic_machine_execute_loop(struct osic *osic)
 				argv[i] = POP_OBJECT();
 			}
 
-			e = lobject_method_call(osic,
+			e = oobject_method_call(osic,
 			                        a,
-			                        LOBJECT_METHOD_SET_SETTER,
+			                        OOBJECT_METHOD_SET_SETTER,
 			                        argc,
 			                        argv);
 			CHECK_NULL(e);
@@ -1689,7 +1689,7 @@ osic_machine_execute_loop(struct osic *osic)
 			address = FETCH_CODE4();
 			CHECK_STACK(1);
 			a = POP_OBJECT();
-			if (lobject_boolean(osic, a) == osic->l_false) {
+			if (oobject_boolean(osic, a) == osic->l_false) {
 				machine->pc = address;
 			}
 			break;
@@ -1701,7 +1701,7 @@ osic_machine_execute_loop(struct osic *osic)
 			address = FETCH_CODE4();
 			CHECK_STACK(1);
 			a = POP_OBJECT();
-			if (lobject_boolean(osic, a) == osic->l_true) {
+			if (oobject_boolean(osic, a) == osic->l_true) {
 				machine->pc = address;
 			}
 			break;
@@ -1715,11 +1715,11 @@ osic_machine_execute_loop(struct osic *osic)
 
 		case OPERATIVE_CODE_ARRAY: {
 			size_t size;
-			struct lobject **items;
+			struct oobject **items;
 
 			CHECK_FETCH(4);
 			argc = FETCH_CODE4();
-			size = sizeof(struct lobject *) * argc;
+			size = sizeof(struct oobject *) * argc;
 			items = allocator_alloc(osic, size);
 			CHECK_NULL(items);
 
@@ -1727,7 +1727,7 @@ osic_machine_execute_loop(struct osic *osic)
 			for (i = 0; i < argc; i++) {
 				items[i] = POP_OBJECT();
 			}
-			c = larray_create(osic, argc, items);
+			c = oarray_create(osic, argc, items);
 			allocator_free(osic, items);
 			CHECK_NULL(c);
 			CHECK_ERROR(c);
@@ -1737,11 +1737,11 @@ osic_machine_execute_loop(struct osic *osic)
 
 		case OPERATIVE_CODE_DICTIONARY: {
 			size_t size;
-			struct lobject **items;
+			struct oobject **items;
 
 			CHECK_FETCH(4);
 			argc = FETCH_CODE4();
-			size = sizeof(struct lobject *) * argc;
+			size = sizeof(struct oobject *) * argc;
 			items = allocator_alloc(osic, size);
 			CHECK_NULL(items);
 
@@ -1749,7 +1749,7 @@ osic_machine_execute_loop(struct osic *osic)
 			for (i = 0; i < argc; i++) {
 				items[i] = POP_OBJECT();
 			}
-			c = ldictionary_create(osic, argc, items);
+			c = odict_create(osic, argc, items);
 			allocator_free(osic, items);
 			CHECK_NULL(c);
 			CHECK_ERROR(c);
@@ -1764,9 +1764,9 @@ osic_machine_execute_loop(struct osic *osic)
 			int nparams;
 			int nlocals;
 
-			struct lobject *name;
-			struct lobject **params;
-			struct lfunction *function;
+			struct oobject *name;
+			struct oobject **params;
+			struct ofunction *function;
 
 			CHECK_FETCH(8);
 			define = FETCH_CODE1();
@@ -1788,7 +1788,7 @@ osic_machine_execute_loop(struct osic *osic)
 				params[i - 1] = POP_OBJECT();
 			}
 
-			function = lfunction_create_with_address(osic,
+			function = ofunction_create_with_address(osic,
 			                                         name,
 			                                         define,
 			                                         nlocals,
@@ -1797,10 +1797,10 @@ osic_machine_execute_loop(struct osic *osic)
 			                                         machine->pc,
 			                                         params);
 			CHECK_NULL(function);
-			CHECK_ERROR((struct lobject *)function);
+			CHECK_ERROR((struct oobject *)function);
 
 			function->frame = machine_peek_frame(osic);
-			PUSH_OBJECT((struct lobject *)function);
+			PUSH_OBJECT((struct oobject *)function);
 
 			machine = osic->l_machine;
 			machine->pc = address; /* jmp out of function's body */
@@ -1811,7 +1811,7 @@ osic_machine_execute_loop(struct osic *osic)
 			CHECK_STACK(2);
 			b = POP_OBJECT();
 			a = POP_OBJECT();
-			c = lkarg_create(osic, a, b);
+			c = okarg_create(osic, a, b);
 			CHECK_NULL(c);
 			CHECK_ERROR(c);
 			PUSH_OBJECT(c);
@@ -1821,8 +1821,8 @@ osic_machine_execute_loop(struct osic *osic)
 		case OPERATIVE_CODE_VARG: {
 			CHECK_STACK(1);
 			a = POP_OBJECT();
-			if (lobject_is_array(osic, a)) {
-				c = lvarg_create(osic, a);
+			if (oobject_is_array(osic, a)) {
+				c = ovarg_create(osic, a);
 				CHECK_NULL(c);
 				CHECK_ERROR(c);
 				PUSH_OBJECT(c);
@@ -1837,7 +1837,7 @@ osic_machine_execute_loop(struct osic *osic)
 		case OPERATIVE_CODE_VKARG: {
 			CHECK_STACK(1);
 			a = POP_OBJECT();
-			c = lvkarg_create(osic, a);
+			c = ovkarg_create(osic, a);
 			CHECK_NULL(c);
 			CHECK_ERROR(c);
 			PUSH_OBJECT(c);
@@ -1853,7 +1853,7 @@ osic_machine_execute_loop(struct osic *osic)
 			}
 
 			a = POP_OBJECT();
-			c = lobject_call(osic, a, argc, argv);
+			c = oobject_call(osic, a, argc, argv);
 			CHECK_NULL(c);
 			CHECK_ERROR(c);
 			POP_CALLBACK_FRAME(c);
@@ -1861,8 +1861,8 @@ osic_machine_execute_loop(struct osic *osic)
 		}
 
 		case OPERATIVE_CODE_TAILCALL: {
-			struct lframe *newframe;
-			struct lframe *oldframe;
+			struct oframe *newframe;
+			struct oframe *oldframe;
 
 			CHECK_FETCH(1);
 			argc = FETCH_CODE1();
@@ -1873,7 +1873,7 @@ osic_machine_execute_loop(struct osic *osic)
 
 			/* pop the function */
 			a = POP_OBJECT();
-			c = lobject_call(osic, a, argc, argv);
+			c = oobject_call(osic, a, argc, argv);
 			/*
 			 * make sure callee is a osic function
 			 * otherwise tailcall is just call
@@ -1936,7 +1936,7 @@ osic_machine_execute_loop(struct osic *osic)
 				const char *fmt;
 
 				fmt = "'%@' not binding to instance";
-				c = lobject_error_runtime(osic,
+				c = oobject_error_runtime(osic,
 				                          fmt,
 				                          frame->callee);
 				e = machine_throw(osic, c);
@@ -1948,13 +1948,13 @@ osic_machine_execute_loop(struct osic *osic)
 		case OPERATIVE_CODE_SUPER: {
 			frame = machine_peek_frame(osic);
 			if (frame->self) {
-				c = lsuper_create(osic, frame->self);
+				c = osuper_create(osic, frame->self);
 				PUSH_OBJECT(c);
 			} else {
 				const char *fmt;
 
 				fmt = "'%@' not binding to instance";
-				c = lobject_error_runtime(osic,
+				c = oobject_error_runtime(osic,
 				                          fmt,
 				                          frame->callee);
 				e = machine_throw(osic, c);
@@ -1966,10 +1966,10 @@ osic_machine_execute_loop(struct osic *osic)
 		case OPERATIVE_CODE_CLASS: {
 			int nattrs;
 			int nsupers;
-			struct lobject *name;
-			struct lobject *clazz;
-			struct lobject *attrs[128];
-			struct lobject *supers[128];
+			struct oobject *name;
+			struct oobject *clazz;
+			struct oobject *attrs[128];
+			struct oobject *supers[128];
 
 			CHECK_FETCH(2);
 			nsupers = FETCH_CODE1();
@@ -1989,7 +1989,7 @@ osic_machine_execute_loop(struct osic *osic)
 				attrs[i + 1] = POP_OBJECT(); /* value */
 			}
 
-			clazz = lclass_create(osic,
+			clazz = oclass_create(osic,
 			                      name,
 			                      nsupers,
 			                      supers,
@@ -2004,14 +2004,14 @@ osic_machine_execute_loop(struct osic *osic)
 		case OPERATIVE_CODE_MODULE: {
 			int address;
 			int nlocals;
-			struct lobject *callee;
-			struct lmodule *module;
+			struct oobject *callee;
+			struct omodule *module;
 
 			CHECK_FETCH(5);
 			nlocals = FETCH_CODE1();
 			address = FETCH_CODE4();
-			module = (struct lmodule *)POP_OBJECT();
-			callee = (struct lobject *)module;
+			module = (struct omodule *)POP_OBJECT();
+			callee = (struct oobject *)module;
 			frame = machine_push_new_frame(osic,
 			                               NULL,
 			                               callee,
@@ -2020,7 +2020,7 @@ osic_machine_execute_loop(struct osic *osic)
 			CHECK_NULL(frame);
 			frame->ra = address;
 			for (i = 0; i < nlocals; i++) {
-				lframe_set_item(osic, frame, i, osic->l_nil);
+				oframe_set_item(osic, frame, i, osic->l_nil);
 			}
 			module->frame = frame;
 			module->nlocals = nlocals;
@@ -2187,7 +2187,7 @@ machine_disassemble(struct osic *osic)
 		case OPERATIVE_CODE_CONST:
 			a = machine_fetch_code4(osic);
 			printf("const %d ; ", a);
-			lobject_print(osic, machine->cpool[a], NULL);
+			oobject_print(osic, machine->cpool[a], NULL);
 			break;
 
 		case OPERATIVE_CODE_UNPACK:

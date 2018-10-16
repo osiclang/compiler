@@ -10,10 +10,10 @@
 #include "compiler.h"
 #include "machine.h"
 #include "generator.h"
-#include "lmodule.h"
-#include "lnumber.h"
-#include "lstring.h"
-#include "linteger.h"
+#include "oModule.h"
+#include "oNumber.h"
+#include "oString.h"
+#include "oInteger.h"
 
 #include <ctype.h>
 #include <assert.h>
@@ -251,7 +251,7 @@ compiler_error_redefined(struct osic *osic, struct syntax *node, char *name)
 }
 
 static int
-compiler_const_object(struct osic *osic, struct lobject *object)
+compiler_const_object(struct osic *osic, struct oobject *object)
 {
 	int cpool;
 
@@ -264,9 +264,9 @@ compiler_const_object(struct osic *osic, struct lobject *object)
 static int
 compiler_const_string(struct osic *osic, char *buffer)
 {
-	struct lobject *object;
+	struct oobject *object;
 
-	object = lstring_create(osic, buffer, strlen(buffer));
+	object = ostring_create(osic, buffer, strlen(buffer));
 
 	return compiler_const_object(osic, object);
 }
@@ -2086,8 +2086,8 @@ compiler_module(struct osic *osic, struct syntax *node)
 	char *module_name;
 	char *module_path;
 	struct scope *module_scope;
-	struct lobject *module_key;
-	struct lobject *module;
+	struct oobject *module_key;
+	struct oobject *module;
 
 	struct syntax *stmt;
 	struct syntax *stmt_enclosing;
@@ -2098,16 +2098,16 @@ compiler_module(struct osic *osic, struct syntax *node)
 	l_exit = generator_make_label(osic);
 
 	module_name = resolve_module_name(osic, node->filename);
-	module = lmodule_create(osic,
-	                        lstring_create(osic,
+	module = omodule_create(osic,
+	                        ostring_create(osic,
 	                                       module_name,
 	                                       strlen(module_name)));
 	if (!module) {
 		return 0;
 	}
 	module_path = resolve_module_path(osic, node, input_filename(osic));
-	module_key = lstring_create(osic, module_path, strlen(module_path));
-	lobject_set_item(osic, osic->l_modules, module_key, module);
+	module_key = ostring_create(osic, module_path, strlen(module_path));
+	oobject_set_item(osic, osic->l_modules, module_key, module);
 
 	compiler_const_object(osic, module);
 	c_module = generator_emit_module(osic, 0, l_exit);
@@ -2202,12 +2202,12 @@ compiler_module(struct osic *osic, struct syntax *node)
 
 	module_scope = osic->l_scope;
 	for (symbol = module_scope->symbol; symbol; symbol = symbol->next) {
-		lobject_set_item(osic,
-		                 ((struct lmodule *)module)->attr,
-		                 lstring_create(osic,
+		oobject_set_item(osic,
+		                 ((struct omodule *)module)->attr,
+		                 ostring_create(osic,
 		                                symbol->name,
 		                                strlen(symbol->name)),
-		                 linteger_create_from_long(osic,
+		                 ointeger_create_from_long(osic,
 		                                           symbol->local));
 	}
 
@@ -2232,7 +2232,7 @@ compiler_import_stmt(struct osic *osic, struct syntax *node)
 	char *module_path;
 	struct syntax *module_stmt;
 	struct scope *module_scope;
-	struct lobject *module;
+	struct oobject *module;
 
 	struct syntax *stmt_enclosing;
 	struct syntax *space_enclosing;
@@ -2257,9 +2257,9 @@ compiler_import_stmt(struct osic *osic, struct syntax *node)
 	}
 	symbol->local = space_enclosing->nlocals++;
 
-	module = lobject_get_item(osic,
+	module = oobject_get_item(osic,
 	                          osic->l_modules,
-	                          lstring_create(osic,
+	                          ostring_create(osic,
 	                                         module_path,
 	                                         strlen(module_path)));
 	if (module) {
@@ -2273,7 +2273,7 @@ compiler_import_stmt(struct osic *osic, struct syntax *node)
 
 #ifndef STATICLIB
 	if (module_path_is_native(osic, module_path)) {
-		typedef struct lobject *(*module_init_t)(struct osic *);
+		typedef struct oobject *(*module_init_t)(struct osic *);
 		void *handle;
 		char *init_name;
 		module_init_t module_init;
@@ -2320,9 +2320,9 @@ compiler_import_stmt(struct osic *osic, struct syntax *node)
 		}
 		generator_emit_store(osic, 0, symbol->local);
 
-		lobject_set_item(osic,
+		oobject_set_item(osic,
 	                         osic->l_modules,
-		                 lstring_create(osic,
+		                 ostring_create(osic,
 		                                module_path,
 		                                strlen(module_path)),
 		                 module);
@@ -2357,8 +2357,8 @@ compiler_import_stmt(struct osic *osic, struct syntax *node)
 	scope_enter(osic, SCOPE_MODULE);
 	osic->l_space_enclosing = module_stmt;
 
-	module = lmodule_create(osic,
-	                        lstring_create(osic,
+	module = omodule_create(osic,
+	                        ostring_create(osic,
 	                                       module_name,
 	                                       strlen(module_name)));
 
@@ -2367,9 +2367,9 @@ compiler_import_stmt(struct osic *osic, struct syntax *node)
 	}
 	generator_emit_store(osic, 0, symbol->local);
 
-	lobject_set_item(osic,
+	oobject_set_item(osic,
 	                 osic->l_modules,
-	                 lstring_create(osic,
+	                 ostring_create(osic,
 	                                module_path,
 	                                strlen(module_path)),
 	                 module);
@@ -2467,12 +2467,12 @@ compiler_import_stmt(struct osic *osic, struct syntax *node)
 
 	module_scope = osic->l_scope;
 	for (symbol = module_scope->symbol; symbol; symbol = symbol->next) {
-		lobject_set_item(osic,
-		                 ((struct lmodule *)module)->attr,
-		                 lstring_create(osic,
+		oobject_set_item(osic,
+		                 ((struct omodule *)module)->attr,
+		                 ostring_create(osic,
 		                                symbol->name,
 		                                strlen(symbol->name)),
-		                 linteger_create_from_long(osic,
+		                 ointeger_create_from_long(osic,
 		                                           symbol->local));
 	}
 
@@ -2494,7 +2494,7 @@ compiler_import_stmt(struct osic *osic, struct syntax *node)
 static int
 compiler_expr(struct osic *osic, struct syntax *node)
 {
-	struct lobject *object;
+	struct oobject *object;
 
 	if (!node) {
 		return 0;
@@ -2541,9 +2541,9 @@ compiler_expr(struct osic *osic, struct syntax *node)
 
 	case SYNTAX_KIND_NUMBER_LITERAL:
 		if (node_is_integer(osic, node)) {
-			object = linteger_create_from_cstr(osic, node->buffer);
+			object = ointeger_create_from_cstr(osic, node->buffer);
 		} else {
-			object = lnumber_create_from_cstr(osic, node->buffer);
+			object = onumber_create_from_cstr(osic, node->buffer);
 		}
 		if (!compiler_const_object(osic, object)) {
 			return 0;
@@ -2551,7 +2551,7 @@ compiler_expr(struct osic *osic, struct syntax *node)
 		break;
 
 	case SYNTAX_KIND_STRING_LITERAL:
-		object = lstring_create(osic, node->buffer, node->length);
+		object = ostring_create(osic, node->buffer, node->length);
 		if (!compiler_const_object(osic, object)) {
 			return 0;
 		}
@@ -2623,7 +2623,7 @@ compiler_expr(struct osic *osic, struct syntax *node)
 				return 0;
 			}
 		} else {
-			object = linteger_create_from_long(osic, 0);
+			object = ointeger_create_from_long(osic, 0);
 			if (!compiler_const_object(osic, object)) {
 				return 0;
 			}
@@ -2644,7 +2644,7 @@ compiler_expr(struct osic *osic, struct syntax *node)
 				return 0;
 			}
 		} else {
-			object = linteger_create_from_long(osic, 1);
+			object = ointeger_create_from_long(osic, 1);
 			if (!compiler_const_object(osic, object)) {
 				return 0;
 			}

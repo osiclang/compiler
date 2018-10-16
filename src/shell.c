@@ -8,7 +8,7 @@
 #include "compiler.h"
 #include "machine.h"
 #include "generator.h"
-#include "ltable.h"
+#include "oTable.h"
 
 #include <string.h>
 
@@ -137,46 +137,46 @@ check_stmt_is_closed(char *code, int len)
 
 void
 shell_store_frame(struct osic *osic,
-                  struct lframe *frame,
-                  struct lobject *locals[])
+                  struct oframe *frame,
+                  struct oobject *locals[])
 {
 	int i;
 
 	for (i = 0; i < frame->nlocals; i++) {
-		locals[i] = lframe_get_item(osic, frame, i);
+		locals[i] = oframe_get_item(osic, frame, i);
 	}
 }
 
 void
 shell_restore_frame(struct osic *osic,
-                    struct lframe *frame,
+                    struct oframe *frame,
                     int nlocals,
-                    struct lobject *locals[])
+                    struct oobject *locals[])
 {
 	int i;
 
 	for (i = 0; i < nlocals; i++) {
-		lframe_set_item(osic, frame, i, locals[i]);
+		oframe_set_item(osic, frame, i, locals[i]);
 	}
 }
 
-struct lframe *
-shell_extend_frame(struct osic *osic, struct lframe *frame, int nlocals)
+struct oframe *
+shell_extend_frame(struct osic *osic, struct oframe *frame, int nlocals)
 {
 	int i;
-	struct lframe *newframe;
+	struct oframe *newframe;
 
 	newframe = frame;
 	if (frame->nlocals < nlocals) {
-		newframe = lframe_create(osic, NULL, NULL, NULL, nlocals);
+		newframe = oframe_create(osic, NULL, NULL, NULL, nlocals);
 
-		lobject_copy(osic,
-		             (struct lobject *)frame,
-		             (struct lobject *)newframe,
-		             sizeof(struct lframe));
+		oobject_copy(osic,
+		             (struct oobject *)frame,
+		             (struct oobject *)newframe,
+		             sizeof(struct oframe));
 
 		for (i = frame->nlocals; i < nlocals; i++) {
-			lframe_set_item(osic, newframe, i, osic->l_nil);
+			oframe_set_item(osic, newframe, i, osic->l_nil);
 		}
 	}
 
@@ -195,10 +195,10 @@ shell(struct osic *osic)
 	char buffer[4096];
 
 	struct syntax *node;
-	struct lframe *frame;
+	struct oframe *frame;
 
 	int nlocals;
-	struct lobject *locals[256];
+	struct oobject *locals[256];
 
 	puts("osic Version 0.0.1");
 	puts("Copyright 2018 by Swen Kalski");

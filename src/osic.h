@@ -4,13 +4,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "ltype.h"
-#include "lframe.h"
-#include "lfunction.h"
+#include "oType.h"
+#include "oFrame.h"
+#include "oFunction.h"
 
 #define OSIC_NAME_MAX 256
 
-struct lobject;
+struct oobject;
 
 struct osic {
 	long l_random;
@@ -31,79 +31,79 @@ struct osic {
 	void *l_space_enclosing; /* variable space (function and module) */
 
 	/*
-	 * lobject->l_method -> ltype hashtable
+	 * oobject->l_method -> otype hashtable
 	 */
 	void *l_types_slots;
 	unsigned long l_types_count;
 	unsigned long l_types_length;
 
 	/*
-	 * use lobject->method and ltype->method to identify lobject's type
+	 * use oobject->method and otype->method to identify oobject's type
 	 */
-	struct ltype *l_type_type;
-	struct ltype *l_karg_type;
-	struct ltype *l_varg_type;
-	struct ltype *l_vkarg_type;
-	struct ltype *l_table_type;
-	struct ltype *l_super_type;
-	struct ltype *l_class_type;
-	struct ltype *l_frame_type;
-	struct ltype *l_array_type;
-	struct ltype *l_number_type;
-	struct ltype *l_string_type;
-	struct ltype *l_module_type;
-	struct ltype *l_integer_type;
-	struct ltype *l_boolean_type;
-	struct ltype *l_function_type;
-	struct ltype *l_instance_type;
-	struct ltype *l_iterator_type;
-	struct ltype *l_coroutine_type;
-	struct ltype *l_exception_type;
-	struct ltype *l_dictionary_type;
-	struct ltype *l_continuation_type;
+	struct otype *l_type_type;
+	struct otype *l_karg_type;
+	struct otype *l_varg_type;
+	struct otype *l_vkarg_type;
+	struct otype *l_table_type;
+	struct otype *l_super_type;
+	struct otype *l_class_type;
+	struct otype *l_frame_type;
+	struct otype *l_array_type;
+	struct otype *l_number_type;
+	struct otype *l_string_type;
+	struct otype *l_module_type;
+	struct otype *l_integer_type;
+	struct otype *l_boolean_type;
+	struct otype *l_function_type;
+	struct otype *l_instance_type;
+	struct otype *l_iterator_type;
+	struct otype *l_coroutine_type;
+	struct otype *l_exception_type;
+	struct otype *l_dictionary_type;
+	struct otype *l_continuation_type;
 
-	struct lobject *l_nil;
-	struct lobject *l_true;
-	struct lobject *l_false;
-	struct lobject *l_sentinel;
+	struct oobject *l_nil;
+	struct oobject *l_true;
+	struct oobject *l_false;
+	struct oobject *l_sentinel;
 
-	struct lobject *l_modules;
+	struct oobject *l_modules;
 
-	struct lobject *l_base_error;
-	struct lobject *l_type_error;
-	struct lobject *l_item_error;
-	struct lobject *l_memory_error;
-	struct lobject *l_runtime_error;
-	struct lobject *l_argument_error;
-	struct lobject *l_attribute_error;
-	struct lobject *l_arithmetic_error;
-	struct lobject *l_not_callable_error;
-	struct lobject *l_not_iterable_error;
-	struct lobject *l_not_implemented_error;
+	struct oobject *l_base_error;
+	struct oobject *l_type_error;
+	struct oobject *l_item_error;
+	struct oobject *l_memory_error;
+	struct oobject *l_runtime_error;
+	struct oobject *l_argument_error;
+	struct oobject *l_attribute_error;
+	struct oobject *l_arithmetic_error;
+	struct oobject *l_not_callable_error;
+	struct oobject *l_not_iterable_error;
+	struct oobject *l_not_implemented_error;
 
 	/*
 	 * this is an memory_error instance
 	 */
-	struct lobject *l_out_of_memory;
+	struct oobject *l_out_of_memory;
 
-	struct lobject *l_empty_string;
-	struct lobject *l_space_string;
-	struct lobject *l_add_string;
-	struct lobject *l_sub_string;
-	struct lobject *l_mul_string;
-	struct lobject *l_div_string;
-	struct lobject *l_mod_string;
-	struct lobject *l_call_string;
-	struct lobject *l_get_item_string;
-	struct lobject *l_set_item_string;
-	struct lobject *l_get_attr_string;
-	struct lobject *l_set_attr_string;
-	struct lobject *l_del_attr_string;
-	struct lobject *l_init_string;
-	struct lobject *l_string_string;
-	struct lobject *l_array_string;
-	struct lobject *l_next_string;
-	struct lobject *l_iterator_string;
+	struct oobject *l_empty_string;
+	struct oobject *l_space_string;
+	struct oobject *l_add_string;
+	struct oobject *l_sub_string;
+	struct oobject *l_mul_string;
+	struct oobject *l_div_string;
+	struct oobject *l_mod_string;
+	struct oobject *l_call_string;
+	struct oobject *l_get_item_string;
+	struct oobject *l_set_item_string;
+	struct oobject *l_get_attr_string;
+	struct oobject *l_set_attr_string;
+	struct oobject *l_del_attr_string;
+	struct oobject *l_init_string;
+	struct oobject *l_string_string;
+	struct oobject *l_array_string;
+	struct oobject *l_next_string;
+	struct oobject *l_iterator_string;
 };
 
 struct osic *
@@ -143,16 +143,16 @@ osic_mark_errors(struct osic *osic);
 void
 osic_mark_strings(struct osic *osic);
 
-struct lobject *
-osic_get_type(struct osic *osic, lobject_method_t method);
+struct oobject *
+osic_get_type(struct osic *osic, oobject_method_t method);
 
 int
-osic_add_type(struct osic *osic, struct ltype *type);
+osic_add_type(struct osic *osic, struct otype *type);
 
 void
-osic_del_type(struct osic *osic, struct ltype *type);
+osic_del_type(struct osic *osic, struct otype *type);
 
-struct lobject *
+struct oobject *
 osic_add_global(struct osic *osic, const char *name, void *object);
 
 void
@@ -161,9 +161,9 @@ osic_machine_reset(struct osic *osic);
 int
 osic_machine_halted(struct osic *osic);
 
-struct lobject *
+struct oobject *
 osic_machine_throw(struct osic *osic,
-                    struct lobject *lobject);
+                    struct oobject *oobject);
 
 int
 osic_machine_get_pc(struct osic *osic);
@@ -192,21 +192,21 @@ osic_machine_get_ra(struct osic *osic);
 void
 osic_machine_set_ra(struct osic *osic, int ra);
 
-struct lobject *
+struct oobject *
 osic_machine_get_stack(struct osic *osic, int sp);
 
-struct lobject *
+struct oobject *
 osic_machine_pop_object(struct osic *osic);
 
 void
 osic_machine_push_object(struct osic *osic,
-                          struct lobject *object);
+                          struct oobject *object);
 
-struct lframe *
+struct oframe *
 osic_machine_get_frame(struct osic *osic, int fp);
 
 void
-osic_machine_set_frame(struct osic *osic, int fp, struct lframe *frame);
+osic_machine_set_frame(struct osic *osic, int fp, struct oframe *frame);
 
 /*
  * 1. create frame
@@ -215,67 +215,67 @@ osic_machine_set_frame(struct osic *osic, int fp, struct lframe *frame);
  *
  * use `osic_machine_return_frame' when C function return
  */
-struct lframe *
+struct oframe *
 osic_machine_push_new_frame(struct osic *osic,
-                             struct lobject *self,
-                             struct lobject *callee,
-                             lframe_call_t callback,
+                             struct oobject *self,
+                             struct oobject *callee,
+                             oframe_call_t callback,
                              int nlocals);
 
 /*
  * pop out all top frame with callback
  */
-struct lobject *
+struct oobject *
 osic_machine_return_frame(struct osic *osic,
-                           struct lobject *retval);
+                           struct oobject *retval);
 
 void
 osic_machine_push_frame(struct osic *osic,
-                         struct lframe *frame);
+                         struct oframe *frame);
 
-struct lframe *
+struct oframe *
 osic_machine_peek_frame(struct osic *osic);
 
-struct lframe *
+struct oframe *
 osic_machine_pop_frame(struct osic *osic);
 
 void
 osic_machine_store_frame(struct osic *osic,
-                          struct lframe *frame);
+                          struct oframe *frame);
 
 void
 osic_machine_restore_frame(struct osic *osic,
-                            struct lframe *frame);
+                            struct oframe *frame);
 
-struct lframe *
+struct oframe *
 osic_machine_add_pause(struct osic *osic);
 
-struct lframe *
+struct oframe *
 osic_machine_get_pause(struct osic *osic);
 
-struct lframe *
+struct oframe *
 osic_machine_set_pause(struct osic *osic,
-                        struct lframe *frame);
+                        struct oframe *frame);
 
 void
 osic_machine_del_pause(struct osic *osic,
-                        struct lframe *frame);
+                        struct oframe *frame);
 
-struct lobject *
+struct oobject *
 osic_machine_parse_args(struct osic *osic,
-                         struct lobject *callee,
-                         struct lframe *frame,
+                         struct oobject *callee,
+                         struct oframe *frame,
                          int define,
                          int nvalues, /* number of optional parameters */
                          int nparams, /* number of parameters */
-                         struct lobject *params[], /* parameters name */
+                         struct oobject *params[], /* parameters name */
                          int argc,
-                         struct lobject *argv[]);
+                         struct oobject *argv[]);
 
 int
 osic_machine_execute(struct osic *osic);
 
-struct lobject *
+struct oobject *
 osic_machine_execute_loop(struct osic *osic);
 
 void
@@ -289,24 +289,24 @@ osic_collector_enabled(struct osic *osic);
 
 void
 osic_collector_trace(struct osic *osic,
-                      struct lobject *object);
+                      struct oobject *object);
 
 void
 osic_collector_untrace(struct osic *osic,
-                        struct lobject *object);
+                        struct oobject *object);
 
 void
 osic_collector_mark(struct osic *osic,
-                     struct lobject *object);
+                     struct oobject *object);
 
 void
 osic_collector_barrier(struct osic *osic,
-                        struct lobject *a,
-                        struct lobject *b);
+                        struct oobject *a,
+                        struct oobject *b);
 
 void
 osic_collector_barrierback(struct osic *osic,
-                            struct lobject *a,
-                            struct lobject *b);
+                            struct oobject *a,
+                            struct oobject *b);
 
 #endif /* osic_osic_H */

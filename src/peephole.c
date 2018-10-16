@@ -28,14 +28,14 @@ peephole_rewrite_unop(struct osic *osic,
 
 	int pool;
 	struct generator_code *b;
-	struct lobject *result;
+	struct oobject *result;
 
 #define UNOP(m) do {                                                       \
-	result = lobject_unop(osic,                                       \
+	result = oobject_unop(osic,                                       \
 	                      (m),                                         \
 	                      machine_get_const(osic, b->arg[0]->value)); \
 	pool = machine_add_const(osic, result);                           \
-	if (lobject_is_error(osic, result)) {                             \
+	if (oobject_is_error(osic, result)) {                             \
 		return NULL;                                               \
 	}                                                                  \
 	a->operative_code = OPERATIVE_CODE_CONST;                                          \
@@ -51,20 +51,20 @@ peephole_rewrite_unop(struct osic *osic,
 
 	switch (a->operative_code) {
 	case OPERATIVE_CODE_POS:
-		UNOP(LOBJECT_METHOD_POS);
+		UNOP(OOBJECT_METHOD_POS);
 		break;
 
 	case OPERATIVE_CODE_NEG:
-		UNOP(LOBJECT_METHOD_NEG);
+		UNOP(OOBJECT_METHOD_NEG);
 		break;
 
 	case OPERATIVE_CODE_BNOT:
-		UNOP(LOBJECT_METHOD_BITWISE_NOT);
+		UNOP(OOBJECT_METHOD_BITWISE_NOT);
 		break;
 
 	case OPERATIVE_CODE_LNOT:
 		result = machine_get_const(osic, b->arg[0]->value);
-		if (lobject_boolean(osic, result) == osic->l_true) {
+		if (oobject_boolean(osic, result) == osic->l_true) {
 			pool = machine_add_const(osic, osic->l_false);
 		} else {
 			pool = machine_add_const(osic, osic->l_true);
@@ -93,17 +93,17 @@ peephole_rewrite_binop(struct osic *osic,
 	 */
 
 	int pool;
-	struct lobject *result;
+	struct oobject *result;
 	struct generator_code *a;
 	struct generator_code *b;
 
 #define BINOP(m) do {                                                       \
-	result = lobject_binop(osic,                                       \
+	result = oobject_binop(osic,                                       \
 	                       (m),                                         \
 	                       machine_get_const(osic, b->arg[0]->value),  \
 	                       machine_get_const(osic, c->arg[0]->value)); \
 	pool = machine_add_const(osic, result);                            \
-	if (lobject_is_error(osic, result)) {                              \
+	if (oobject_is_error(osic, result)) {                              \
 		return NULL;                                                \
 	}                                                                   \
 	a->operative_code = OPERATIVE_CODE_CONST;                                           \
@@ -125,63 +125,63 @@ peephole_rewrite_binop(struct osic *osic,
 
 	switch (a->operative_code) {
 	case OPERATIVE_CODE_ADD:
-		BINOP(LOBJECT_METHOD_ADD);
+		BINOP(OOBJECT_METHOD_ADD);
 		break;
 
 	case OPERATIVE_CODE_SUB:
-		BINOP(LOBJECT_METHOD_SUB);
+		BINOP(OOBJECT_METHOD_SUB);
 		break;
 
 	case OPERATIVE_CODE_MUL:
-		BINOP(LOBJECT_METHOD_MUL);
+		BINOP(OOBJECT_METHOD_MUL);
 		break;
 
 	case OPERATIVE_CODE_DIV:
-		BINOP(LOBJECT_METHOD_DIV);
+		BINOP(OOBJECT_METHOD_DIV);
 		break;
 
 	case OPERATIVE_CODE_MOD:
-		BINOP(LOBJECT_METHOD_MOD);
+		BINOP(OOBJECT_METHOD_MOD);
 		break;
 
 	case OPERATIVE_CODE_SHL:
-		BINOP(LOBJECT_METHOD_SHL);
+		BINOP(OOBJECT_METHOD_SHL);
 		break;
 
 	case OPERATIVE_CODE_SHR:
-		BINOP(LOBJECT_METHOD_SHR);
+		BINOP(OOBJECT_METHOD_SHR);
 		break;
 
 	case OPERATIVE_CODE_EQ:
-		BINOP(LOBJECT_METHOD_EQ);
+		BINOP(OOBJECT_METHOD_EQ);
 		break;
 
 	case OPERATIVE_CODE_NE:
-		BINOP(LOBJECT_METHOD_NE);
+		BINOP(OOBJECT_METHOD_NE);
 		break;
 
 	case OPERATIVE_CODE_LT:
-		BINOP(LOBJECT_METHOD_LT);
+		BINOP(OOBJECT_METHOD_LT);
 		break;
 
 	case OPERATIVE_CODE_LE:
-		BINOP(LOBJECT_METHOD_LE);
+		BINOP(OOBJECT_METHOD_LE);
 		break;
 
 	case OPERATIVE_CODE_GT:
-		BINOP(LOBJECT_METHOD_GT);
+		BINOP(OOBJECT_METHOD_GT);
 		break;
 
 	case OPERATIVE_CODE_GE:
-		BINOP(LOBJECT_METHOD_GE);
+		BINOP(OOBJECT_METHOD_GE);
 		break;
 
 	case OPERATIVE_CODE_BAND:
-		BINOP(LOBJECT_METHOD_BITWISE_AND);
+		BINOP(OOBJECT_METHOD_BITWISE_AND);
 		break;
 
 	case OPERATIVE_CODE_BOR:
-		BINOP(LOBJECT_METHOD_BITWISE_OR);
+		BINOP(OOBJECT_METHOD_BITWISE_OR);
 		break;
 
 	default:
@@ -311,11 +311,11 @@ peephole_rewrite_const_jz(struct osic *osic,
 	 *    ...
 	 */
 
-	struct lobject *object;
+	struct oobject *object;
 
 	if (IS_JZ(a) && IS_CONST(a->prev)) {
 		object = machine_get_const(osic, a->prev->arg[0]->value);
-		if (lobject_boolean(osic, object) == osic->l_true) {
+		if (oobject_boolean(osic, object) == osic->l_true) {
 			generator_delete_code(osic, a->prev);
 			a = a->next;
 			generator_delete_code(osic, a->prev);
@@ -361,12 +361,12 @@ peephole_rewrite_const_dup_jz(struct osic *osic,
 	 *    ...
 	 */
 
-	struct lobject *object;
+	struct oobject *object;
 
 	if (IS_JZ(a) && IS_DUP(a->prev) && IS_CONST(a->prev->prev)) {
 		a = a->prev->prev;
 		object = machine_get_const(osic, a->arg[0]->value);
-		if (lobject_boolean(osic, object) == osic->l_true) {
+		if (oobject_boolean(osic, object) == osic->l_true) {
 			generator_delete_code(osic, a->next->next);
 			generator_delete_code(osic, a->next);
 		} else {
@@ -411,12 +411,12 @@ peephole_rewrite_const_dup_jnz(struct osic *osic,
 	 *    ...
 	 */
 
-	struct lobject *object;
+	struct oobject *object;
 
 	if (IS_JNZ(a) && IS_DUP(a->prev) && IS_CONST(a->prev->prev)) {
 		a = a->prev->prev;
 		object = machine_get_const(osic, a->arg[0]->value);
-		if (lobject_boolean(osic, object) == osic->l_true) {
+		if (oobject_boolean(osic, object) == osic->l_true) {
 			generator_delete_code(osic, a->next);
 			a->next->operative_code = OPERATIVE_CODE_JMP;
 		} else {

@@ -1,9 +1,9 @@
 #ifndef OSIC_LIB_OS_H
 #define OSIC_LIB_OS_H
 
-#include "lobject.h"
+#include "oObject.h"
 
-struct lobject *
+struct oobject *
 os_module(struct osic *osic);
 
 #endif /* osic_LIB_OS_H */

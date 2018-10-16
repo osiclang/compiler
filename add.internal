@@ -1,0 +1,45 @@
+Create a C function in lemon only need one c function, example
+
+static struct oobject *
+hello(struct lemon *lemon,
+      struct oobject *self,
+      int argc, struct oobject *argv[])
+{
+	printf("hello,world\n");
+	return lemon->l_nil; // this is required
+}
+
+
+And add function to osic before compile.
+
+const char *cstr = "hello";
+struct oobject *name = ostring_create(lemon, cstr, strlen(cstr));
+struct oobject *function = ofunction_create(lemon, name, NULL, hello);
+lemon_add_global(lemon, cstr, function);
+
+16.2 object demo
+Create a new object required a structure and a function, example
+
+struct an_object {
+	struct oobject object;
+};
+
+static struct oobject *
+an_object_method(struct osic *osic,
+		 struct oobject *self,
+		 int method, int argc,
+		 struct oobject *argv[])
+{
+	switch (method) {
+	case oobject_METHOD_STRING:
+		return ostring_create(osic, "an_object", 8);
+
+	default:
+		return oobject_default(losic, self, method, argc, argv);
+	}
+}
+
+Create object use oobject_create ,example
+
+struct oobject *object = oobject_create(lemon,
+	sizeof(struct an_object), an_object_method);

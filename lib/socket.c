@@ -1,10 +1,10 @@
 #include "osic.h"
-#include "larray.h"
-#include "lmodule.h"
-#include "lobject.h"
-#include "lstring.h"
-#include "linteger.h"
-#include "lfunction.h"
+#include "oArray.h"
+#include "oModule.h"
+#include "oObject.h"
+#include "oString.h"
+#include "oInteger.h"
+#include "oFunction.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -41,8 +41,8 @@ typedef int socklen_t;
 #define SHUT_RDWR 2
 #endif
 
-static struct lobject *
-socket_socket(struct osic *osic, struct lobject *self, int argc, struct lobject *argv[])
+static struct oobject *
+socket_socket(struct osic *osic, struct oobject *self, int argc, struct oobject *argv[])
 {
 	int fd;
 	int opt;
@@ -51,31 +51,31 @@ socket_socket(struct osic *osic, struct lobject *self, int argc, struct lobject 
 	int protocol;
 
 	if (argc > 3) {
-		return lobject_error_argument(osic, "socket() too many arguments");
+		return oobject_error_argument(osic, "socket() too many arguments");
 	}
 
 	domain = 0;
 	if (argc > 0) {
-		if (!lobject_is_integer(osic, argv[0])) {
-			return lobject_error_argument(osic, "socket() integer value required");
+		if (!oobject_is_integer(osic, argv[0])) {
+			return oobject_error_argument(osic, "socket() integer value required");
 		}
-		domain = linteger_to_long(osic, argv[0]);
+		domain = ointeger_to_long(osic, argv[0]);
 	}
 
 	type = 0;
 	if (argc > 1) {
-		if (!lobject_is_integer(osic, argv[1])) {
-			return lobject_error_argument(osic, "socket() integer value required");
+		if (!oobject_is_integer(osic, argv[1])) {
+			return oobject_error_argument(osic, "socket() integer value required");
 		}
-		type = linteger_to_long(osic, argv[1]);
+		type = ointeger_to_long(osic, argv[1]);
 	}
 
 	protocol = 0;
 	if (argc > 2) {
-		if (!lobject_is_integer(osic, argv[2])) {
-			return lobject_error_argument(osic, "socket() integer value required");
+		if (!oobject_is_integer(osic, argv[2])) {
+			return oobject_error_argument(osic, "socket() integer value required");
 		}
-		protocol = linteger_to_long(osic, argv[2]);
+		protocol = ointeger_to_long(osic, argv[2]);
 	}
 
 	fd = socket(domain, type, protocol);
@@ -85,27 +85,27 @@ socket_socket(struct osic *osic, struct lobject *self, int argc, struct lobject 
 		perror("setsockopt");
 	}
 
-	return linteger_create_from_long(osic, fd);
+	return ointeger_create_from_long(osic, fd);
 }
 
-static struct lobject *
-socket_bind(struct osic *osic, struct lobject *self, int argc, struct lobject *argv[])
+static struct oobject *
+socket_bind(struct osic *osic, struct oobject *self, int argc, struct oobject *argv[])
 {
 	int fd;
 	int port;
 	struct sockaddr_in addr;
 
 	if (argc != 2) {
-		return lobject_error_argument(osic, "bind() required port");
+		return oobject_error_argument(osic, "bind() required port");
 	}
 
-	port = linteger_to_long(osic, argv[1]);
+	port = ointeger_to_long(osic, argv[1]);
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = htons(INADDR_ANY);
 	addr.sin_port = htons(port);
 
-	fd = linteger_to_long(osic, argv[0]);
+	fd = ointeger_to_long(osic, argv[0]);
 	if (bind(fd, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
 		perror("bind");
 	}
@@ -113,22 +113,22 @@ socket_bind(struct osic *osic, struct lobject *self, int argc, struct lobject *a
 	return osic->l_nil;
 }
 
-static struct lobject *
-socket_listen(struct osic *osic, struct lobject *self, int argc, struct lobject *argv[])
+static struct oobject *
+socket_listen(struct osic *osic, struct oobject *self, int argc, struct oobject *argv[])
 {
 	int fd;
 	int backlog;
 
 	backlog = 16;
 	if (argc > 1) {
-		backlog = linteger_to_long(osic, argv[1]);
+		backlog = ointeger_to_long(osic, argv[1]);
 	}
 
 	if (argc > 2) {
-		return lobject_error_argument(osic, "listen() too many arguments");
+		return oobject_error_argument(osic, "listen() too many arguments");
 	}
 
-	fd = linteger_to_long(osic, argv[0]);
+	fd = ointeger_to_long(osic, argv[0]);
 	if (listen(fd, backlog) == -1) {
 		perror("listen");
 	}
@@ -136,8 +136,8 @@ socket_listen(struct osic *osic, struct lobject *self, int argc, struct lobject 
 	return osic->l_nil;
 }
 
-static struct lobject *
-socket_connect(struct osic *osic, struct lobject *self, int argc, struct lobject *argv[])
+static struct oobject *
+socket_connect(struct osic *osic, struct oobject *self, int argc, struct oobject *argv[])
 {
 	int fd;
 	int rc;
@@ -147,36 +147,36 @@ socket_connect(struct osic *osic, struct lobject *self, int argc, struct lobject
 	struct sockaddr_in addr;
 
 	if (argc != 3) {
-		return lobject_error_argument(osic, "connect() require addr and port");
+		return oobject_error_argument(osic, "connect() require addr and port");
 	}
-	host = lstring_to_cstr(osic, argv[1]);
-	port = linteger_to_long(osic, argv[2]);
+	host = ostring_to_cstr(osic, argv[1]);
+	port = ointeger_to_long(osic, argv[2]);
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(port);
 	addr.sin_addr.s_addr = inet_addr(host);
 
-	fd = linteger_to_long(osic, argv[0]);
+	fd = ointeger_to_long(osic, argv[0]);
 	rc = connect(fd, (struct sockaddr *)&addr, sizeof(addr));
 	if (rc == -1) {
 		perror("connect");
 	}
 
-	return linteger_create_from_long(osic, rc);
+	return ointeger_create_from_long(osic, rc);
 }
 
-static struct lobject *
-socket_accept(struct osic *osic, struct lobject *a, int argc, struct lobject *argv[])
+static struct oobject *
+socket_accept(struct osic *osic, struct oobject *a, int argc, struct oobject *argv[])
 {
 	int fd;
 	int rc;
 	struct sockaddr_in addr;
 	char buffer[INET6_ADDRSTRLEN];
 	socklen_t length = sizeof(addr);
-	struct lobject *items[2];
+	struct oobject *items[2];
 
-	fd = linteger_to_long(osic, argv[0]);
+	fd = ointeger_to_long(osic, argv[0]);
 	rc = accept(fd, (struct sockaddr *)&addr, &length);
 	if (rc == -1) {
 		perror("accept");
@@ -191,78 +191,78 @@ socket_accept(struct osic *osic, struct lobject *a, int argc, struct lobject *ar
 	                 0,
 	                 NI_NUMERICHOST))
 	{
-		items[0] = lstring_create(osic, buffer, strlen(buffer));
-		items[1] = linteger_create_from_long(osic, ntohs(addr.sin_port));
-		items[1] = larray_create(osic, 2, items);
-		items[0] = linteger_create_from_long(osic, rc);
+		items[0] = ostring_create(osic, buffer, strlen(buffer));
+		items[1] = ointeger_create_from_long(osic, ntohs(addr.sin_port));
+		items[1] = oarray_create(osic, 2, items);
+		items[0] = ointeger_create_from_long(osic, rc);
 
-		return larray_create(osic, 2, items);
+		return oarray_create(osic, 2, items);
 	}
 
 	items[0] = osic->l_empty_string;
-	items[1] = linteger_create_from_long(osic, 0);
-	items[1] = larray_create(osic, 2, items);
-	items[0] = linteger_create_from_long(osic, rc);
+	items[1] = ointeger_create_from_long(osic, 0);
+	items[1] = oarray_create(osic, 2, items);
+	items[0] = ointeger_create_from_long(osic, rc);
 
-	return larray_create(osic, 2, items);
+	return oarray_create(osic, 2, items);
 }
 
-static struct lobject *
-socket_recv(struct osic *osic, struct lobject *a, int argc, struct lobject *argv[])
+static struct oobject *
+socket_recv(struct osic *osic, struct oobject *a, int argc, struct oobject *argv[])
 {
 	int fd;
 	int length;
 	char buffer[4096];
 
 	memset(buffer, 0, sizeof(buffer));
-	fd = linteger_to_long(osic, argv[0]);
+	fd = ointeger_to_long(osic, argv[0]);
 	length = recv(fd, buffer, 4096, 0);
 	if (length > 0) {
-		return lstring_create(osic, buffer, length);
+		return ostring_create(osic, buffer, length);
 	}
 
-	return lstring_create(osic, NULL, 0);
+	return ostring_create(osic, NULL, 0);
 }
 
-static struct lobject *
-socket_send(struct osic *osic, struct lobject *a, int argc, struct lobject *argv[])
+static struct oobject *
+socket_send(struct osic *osic, struct oobject *a, int argc, struct oobject *argv[])
 {
 	int fd;
 	int rc;
 
 	if (argc != 2) {
-		return lobject_error_argument(osic, "send() require 2 arguments");
+		return oobject_error_argument(osic, "send() require 2 arguments");
 	}
 
-	fd = linteger_to_long(osic, argv[0]);
+	fd = ointeger_to_long(osic, argv[0]);
 	rc = send(fd,
-	          lstring_buffer(osic, argv[1]),
-	          lstring_length(osic, argv[1]),
+	          ostring_buffer(osic, argv[1]),
+	          ostring_length(osic, argv[1]),
 	          0);
 	if (rc < 0) {
 		perror("send");
 	}
 
-	return linteger_create_from_long(osic, rc);
+	return ointeger_create_from_long(osic, rc);
 }
 
-static struct lobject *
-socket_shutdown(struct osic *osic, struct lobject *a, int argc, struct lobject *argv[])
+static struct oobject *
+socket_shutdown(struct osic *osic, struct oobject *a, int argc, struct oobject *argv[])
 {
 	int fd;
 	int rc;
 
-	fd = linteger_to_long(osic, argv[0]);
+	fd = ointeger_to_long(osic, argv[0]);
 	rc = shutdown(fd, SHUT_RDWR);
 
-	return linteger_create_from_long(osic, rc);
+	return ointeger_create_from_long(osic, rc);
 }
 
-struct lobject *
+struct oobject *
 socket_module(struct osic *osic)
 {
-	struct lobject *name;
-	struct lobject *module;
+	struct oobject *name;
+	struct oobject *module;
 
 #ifdef WINDOWS
 	WSADATA wsa;
@@ -274,67 +274,67 @@ socket_module(struct osic *osic)
 	}
 #endif
 
-	module = lmodule_create(osic, lstring_create(osic, "socket", 6));
+	module = omodule_create(osic, ostring_create(osic, "socket", 6));
 
-	name = lstring_create(osic, "socket", 6);
-	lobject_set_attr(osic,
+	name = ostring_create(osic, "socket", 6);
+	oobject_set_attr(osic,
 	                 module,
 	                 name,
-	                 lfunction_create(osic, name, NULL, socket_socket));
+	                 ofunction_create(osic, name, NULL, socket_socket));
 
-	name = lstring_create(osic, "bind", 4);
-	lobject_set_attr(osic,
+	name = ostring_create(osic, "bind", 4);
+	oobject_set_attr(osic,
 	                 module,
 	                 name,
-	                 lfunction_create(osic, name, NULL, socket_bind));
+	                 ofunction_create(osic, name, NULL, socket_bind));
 
-	name = lstring_create(osic, "listen", 6);
-	lobject_set_attr(osic,
+	name = ostring_create(osic, "listen", 6);
+	oobject_set_attr(osic,
 	                 module,
 	                 name,
-	                 lfunction_create(osic, name, NULL, socket_listen));
+	                 ofunction_create(osic, name, NULL, socket_listen));
 
-	name = lstring_create(osic, "connect", 7);
-	lobject_set_attr(osic,
+	name = ostring_create(osic, "connect", 7);
+	oobject_set_attr(osic,
 	                 module,
 	                 name,
-	                 lfunction_create(osic, name, NULL, socket_connect));
+	                 ofunction_create(osic, name, NULL, socket_connect));
 
-	name = lstring_create(osic, "accept", 6);
-	lobject_set_attr(osic,
+	name = ostring_create(osic, "accept", 6);
+	oobject_set_attr(osic,
 	                 module,
 	                 name,
-	                 lfunction_create(osic, name, NULL, socket_accept));
+	                 ofunction_create(osic, name, NULL, socket_accept));
 
-	name = lstring_create(osic, "send", 4);
-	lobject_set_attr(osic,
+	name = ostring_create(osic, "send", 4);
+	oobject_set_attr(osic,
 	                 module,
 	                 name,
-	                 lfunction_create(osic, name, NULL, socket_send));
+	                 ofunction_create(osic, name, NULL, socket_send));
 
-	name = lstring_create(osic, "recv", 4);
-	lobject_set_attr(osic,
+	name = ostring_create(osic, "recv", 4);
+	oobject_set_attr(osic,
 	                 module,
 	                 name,
-	                 lfunction_create(osic, name, NULL, socket_recv));
+	                 ofunction_create(osic, name, NULL, socket_recv));
 
-	name = lstring_create(osic, "shutdown", 8);
-	lobject_set_attr(osic,
+	name = ostring_create(osic, "shutdown", 8);
+	oobject_set_attr(osic,
 	                 module,
 	                 name,
-	                 lfunction_create(osic, name, NULL, socket_shutdown));
+	                 ofunction_create(osic, name, NULL, socket_shutdown));
 
-	name = lstring_create(osic, "AF_INET", 7);
-	lobject_set_attr(osic,
+	name = ostring_create(osic, "AF_INET", 7);
+	oobject_set_attr(osic,
 	                 module,
 	                 name,
-	                 linteger_create_from_long(osic, AF_INET));
+	                 ointeger_create_from_long(osic, AF_INET));
 
-	name = lstring_create(osic, "SOCK_STREAM", 11);
-	lobject_set_attr(osic,
+	name = ostring_create(osic, "SOCK_STREAM", 11);
+	oobject_set_attr(osic,
 	                 module,
 	                 name,
-	                 linteger_create_from_long(osic, SOCK_STREAM));
+	                 ointeger_create_from_long(osic, SOCK_STREAM));
 
 	return module;
 }

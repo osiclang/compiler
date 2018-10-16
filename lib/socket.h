@@ -4,7 +4,7 @@
 void
 socket_init(struct osic *osic);
 
-struct lobject *
+struct oobject *
 socket_module(struct osic *osic);
 
 #endif /* osic_LIB_SOCKET_H */

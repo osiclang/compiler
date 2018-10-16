@@ -1,6 +1,6 @@
 #include "osic.h"
-#include "larray.h"
-#include "lstring.h"
+#include "oArray.h"
+#include "oString.h"
 #include "lib/builtin.h"
 #include "shell.h"
 
@@ -21,7 +21,7 @@ main(int argc, char *argv[])
 {
 	int i;
 	struct osic *osic;
-	struct lobject *objects;
+	struct oobject *objects;
 
 	osic = osic_create();
 	if (!osic) {
@@ -32,16 +32,16 @@ main(int argc, char *argv[])
 
 	/* internal module */
 #ifdef MODULE_OS
-	lobject_set_item(osic,
+	oobject_set_item(osic,
 	                 osic->l_modules,
-	                 lstring_create(osic, "os", 2),
+	                 ostring_create(osic, "os", 2),
 	                 os_module(osic));
 #endif
 
 #ifdef MODULE_SOCKET
-	lobject_set_item(osic,
+	oobject_set_item(osic,
 	                 osic->l_modules,
-	                 lstring_create(osic, "socket", 6),
+	                 ostring_create(osic, "socket", 6),
 	                 socket_module(osic));
 #endif
 
@@ -54,12 +54,12 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-		objects = larray_create(osic, 0, NULL);
+		objects = oarray_create(osic, 0, NULL);
 		for (i = 1; i < argc; i++) {
-			struct lobject *value;
+			struct oobject *value;
 
-			value = lstring_create(osic, argv[i], strlen(argv[i]));
-			larray_append(osic, objects, 1, &value);
+			value = ostring_create(osic, argv[i], strlen(argv[i]));
+			oarray_append(osic, objects, 1, &value);
 		}
 		osic_add_global(osic, "argv", objects);
 
