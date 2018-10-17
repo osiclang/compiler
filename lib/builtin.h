@@ -12,4 +12,4 @@ builtin_map(struct osic *osic,
             struct oobject *self,
             int argc, struct oobject *argv[]);
 
-#endif /* osic_BUILTIN_H */
+#endif /* OSIC_BUILTIN_H */

@@ -6,4 +6,4 @@
 struct oobject *
 os_module(struct osic *osic);
 
-#endif /* osic_LIB_OS_H */
+#endif /* OSIC_LIB_OS_H */
