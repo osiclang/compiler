@@ -24,32 +24,45 @@
 static struct oobject *
 os_open(struct osic *osic, struct oobject *self, int argc, struct oobject *argv[])
 {
+        int i;
+	int r;
+	int w;
+	int a;
 	int fd;
-	int oflag;
-	int mode;
+	int flag;
+	long length;
+	const char *buffer;
 
-#if WINDOWS
-	mode = S_IREAD | S_IWRITE;
-#else
-	mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
-#endif
-	if (argc == 3) {
-		mode = ointeger_to_long(osic, argv[2]);
+	flag = 0;
+	if (argc == 2) {
+		length = ostring_length(osic, argv[1]);
+		buffer = ostring_to_cstr(osic, argv[1]);
+
+		r = w = a = 0;
+		for (i = 0; i < length; i++) {
+			if (buffer[i] == 'r') {
+				a = 1;
+			}
+			if (buffer[i] == 'w') {
+				w = 1;
+			}
+			if (buffer[i] == 'a') {
+				a = 1;
+			}
+		}
+		if (r && w) {
+			flag = O_RDWR;
+		} else if (a) {
+			flag = O_APPEND;
+		}
+	}
+	if (flag == 0) {
+		flag = O_RDONLY;
 	}
 
-	if (argc >= 2) {
-		oflag = ointeger_to_long(osic, argv[1]);
-	} else {
-		oflag = O_RDONLY;
-	}
-
-	if (oflag & O_CREAT) {
-		fd = open(ostring_to_cstr(osic, argv[0]), oflag, mode);
-	} else {
-		fd = open(ostring_to_cstr(osic, argv[0]), oflag);
-	}
+	fd = open(ostring_to_cstr(osic, argv[0]), flag);
 	if (fd == -1) {
-		return oobject_error_type(osic, "open '%@' fail: %s", argv[0], strerror(errno));
+		return oobject_error_type(osic, "open '%@' fail", argv[0]);
 	}
 
 	return ointeger_create_from_long(osic, fd);

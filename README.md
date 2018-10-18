@@ -54,6 +54,30 @@ make DEBUG=0 STATIC=0 USE_MALLOC=0 MODULE_OS=1 MODULE_SOCKET=1
 * `MODULE_OS`, for POSIX builtin os library is true
 * `MODULE_SOCKET`, for BSD Socket builtin library is true
 
+### Build Modules
+
+For prce module (Perl Compatible Regular Expressions)
+```
+sudo apt-get install libpcre3-dev
+cd modules/oPcre/
+make
+```
+
+For mysql connection module
+```
+cd modules/oMysql/
+make
+```
+
+If you can not make the file -try installing the mysql sources
+```
+sudo apt-get install libmysqlclient-dev
+```
+If you using Debian and got an Error while installation of libmysqlclient-dev, try:
+```
+sudo apt-get install default-libmysqlclient-dev
+```
+
 Windows Platform
 ----------------
 

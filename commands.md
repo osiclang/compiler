@@ -881,15 +881,39 @@ output
 	c = consume();
 	p.resume();
 
-### Chapter 13 - Continuation
+### Chapter 13 - File/IO
 
-#### 13.1 callcc function.
+#### 13.1 read from file
+`os.open`, `os.read` and `os.close` are part of the os package
+
+        import 'os';
+
+        var file = os.open("test.osic", 'r');
+        var content = os.read(file);
+
+        os.close(file);
+        print(content);
+
+You have to take care, that you always have to close a file.
+
+#### 14.1 write to file
+
+        import 'os';
+
+        var content = "Hello World!";
+        var file = os.open('test.txt', 'rw');
+        os.write('hello.txt', content);
+        os.close(file);
+
+### Chapter 14 - Continuation
+
+#### 14.1 callcc function.
 
 `callcc` is call-with-current-continuation [https://en.wikipedia.org/wiki/Call-with-current-continuation](https://en.wikipedia.org/wiki/Call-with-current-continuation)
 
 `callcc` take a function argument and call it with a continuation argument, the continuation can restart function with `callcc`'s position, example
 
-	var cont;
+	var cont; 
 
 	def f() {
 		print(1);
@@ -900,7 +924,7 @@ output
 	f(); // output 1 , 2
 	cont(); // output 2
 
-#### 13.2 Demo
+#### 14.2 Demo
 
 Demo from wikipedia. [Continuation - Wikipedia](https://en.wikipedia.org/wiki/Continuation)
 
