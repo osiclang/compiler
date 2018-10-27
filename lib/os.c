@@ -24,12 +24,7 @@
 static struct oobject *
 os_open(struct osic *osic, struct oobject *self, int argc, struct oobject *argv[])
 {
-        int i;
-	int r;
-	int w;
-	int a;
-	int fd;
-	int flag;
+        int i, r, w, a, c, fd, flag;
 	long length;
 	const char *buffer;
 
@@ -38,23 +33,28 @@ os_open(struct osic *osic, struct oobject *self, int argc, struct oobject *argv[
 		length = ostring_length(osic, argv[1]);
 		buffer = ostring_to_cstr(osic, argv[1]);
 
-		r = w = a = 0;
+		r = w = a = c = 0;
 		for (i = 0; i < length; i++) {
 			if (buffer[i] == 'r') {
-				a = 1;
+                            a = 1;
 			}
 			if (buffer[i] == 'w') {
-				w = 1;
+                            w = 1;
 			}
 			if (buffer[i] == 'a') {
-				a = 1;
+                            a = 1;
 			}
+                        if (buffer[i] == 'c') {
+                            c = 1;
+                        }
 		}
 		if (r && w) {
-			flag = O_RDWR;
+                    flag = O_RDWR;
 		} else if (a) {
-			flag = O_APPEND;
-		}
+                    flag = O_APPEND;
+		} else if (c) {
+                    flag = O_CREAT;
+                }
 	}
 	if (flag == 0) {
 		flag = O_RDONLY;
