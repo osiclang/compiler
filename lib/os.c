@@ -24,49 +24,38 @@
 static struct oobject *
 os_open(struct osic *osic, struct oobject *self, int argc, struct oobject *argv[])
 {
-        int i, r, w, a, c, fd, flag;
-	long length;
-	const char *buffer;
+	int fd;
+	int oflag;
+	int mode;
 
-	flag = 0;
-	if (argc == 2) {
-		length = ostring_length(osic, argv[1]);
-		buffer = ostring_to_cstr(osic, argv[1]);
-
-		r = w = a = c = 0;
-		for (i = 0; i < length; i++) {
-			if (buffer[i] == 'r') {
-                            a = 1;
-			}
-			if (buffer[i] == 'w') {
-                            w = 1;
-			}
-			if (buffer[i] == 'a') {
-                            a = 1;
-			}
-                        if (buffer[i] == 'c') {
-                            c = 1;
-                        }
-		}
-		if (r && w) {
-                    flag = O_RDWR;
-		} else if (a) {
-                    flag = O_APPEND;
-		} else if (c) {
-                    flag = O_CREAT;
-                }
-	}
-	if (flag == 0) {
-		flag = O_RDONLY;
+#if WINDOWS
+	mode = S_IREAD | S_IWRITE;
+#else
+	mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+#endif
+	if (argc == 3) {
+		mode = ointeger_to_long(osic, argv[2]);
 	}
 
-	fd = open(ostring_to_cstr(osic, argv[0]), flag);
+	if (argc >= 2) {
+		oflag = ointeger_to_long(osic, argv[1]);
+	} else {
+		oflag = O_RDONLY;
+	}
+        
+	if (oflag & O_CREAT) {
+		fd = open(ostring_to_cstr(osic, argv[0]), oflag, mode);
+	} else {
+		fd = open(ostring_to_cstr(osic, argv[0]), oflag);
+	}
+        
 	if (fd == -1) {
-		return oobject_error_type(osic, "open '%@' fail", argv[0]);
+		return oobject_error_type(osic, "open '%@' fail: %s", argv[0], strerror(errno));
 	}
 
 	return ointeger_create_from_long(osic, fd);
 }
+
 
 static struct oobject *
 os_read(struct osic *osic, struct oobject *self, int argc, struct oobject *argv[])
@@ -114,7 +103,7 @@ os_write(struct osic *osic, struct oobject *self, int argc, struct oobject *argv
 	size = write(fd,
 	             ostring_to_cstr(osic, argv[1]),
 	             ostring_length(osic, argv[1]));
-
+       
 	if (size) {
 		return osic->l_true;
 	}
