@@ -890,13 +890,13 @@ output
 - File:  Filename(String)
 
 - Mode:  
-..*1 - Read only
-..*2 - Write
-..*100 - Create
+...1 - Read only
+...2 - Write
+...100 - Create
 
 - CHMOD: 
-..*eg. 655 (See file permissions for unix/linux)
-..*is needed if your create a file on unix/linux
+...eg. 655 (See file permissions for unix/linux)
+...is needed if your create a file on unix/linux
 
 
 #### 13.2 read from file
