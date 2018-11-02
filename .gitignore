@@ -24,3 +24,8 @@
 /bin/
 **/*.so
 
+# KDevelop
+./kdev4
+compiler.kdev4
+
+
