@@ -883,12 +883,21 @@ output
 
 ### Chapter 13 - File/IO
 
-#### 13.1 read from file
+#### 13.1 open file modes 
+
+`os.open(__FILE___, ___MODE___, (optional)___CHMOD___)`
+
+File:  Filename(String)
+Mode:  1 - Read only, 2 - Write
+CHMOD: eg. 655 (See file permissions for unix/linux)
+
+
+#### 13.2 read from file
 `os.open`, `os.read` and `os.close` are part of the os package
 
         import 'os';
 
-        var file = os.open("test.osic", 'r');
+        var file = os.open("test.osic", 1);
         var content = os.read(file);
 
         os.close(file);
@@ -896,12 +905,12 @@ output
 
 You have to take care, that you always have to close a file.
 
-#### 14.1 write to file
+#### 13.3 write to file
 
         import 'os';
 
         var content = "Hello World!";
-        var file = os.open('test.txt', 'rw');
+        var file = os.open('test.txt', 2, 0777);
         os.write('hello.txt', content);
         os.close(file);
 
