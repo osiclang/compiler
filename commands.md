@@ -888,8 +888,11 @@ output
 `os.open(__FILE___, ___MODE___, (optional)___CHMOD___)`
 
 File:  Filename(String)
+
 Mode:  1 - Read only, 2 - Write
+
 CHMOD: eg. 655 (See file permissions for unix/linux)
+
 
 
 #### 13.2 read from file
@@ -910,7 +913,7 @@ You have to take care, that you always have to close a file.
         import 'os';
 
         var content = "Hello World!";
-        var file = os.open('test.txt', 2, 0777);
+        var file = os.open('test.txt', 2, 777);
         os.write('hello.txt', content);
         os.close(file);
 
