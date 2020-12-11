@@ -1,6 +1,6 @@
 
 <img src="https://github.com/OSIClang/compiler/blob/master/logo/logo_with_font_small.png">
-OSIC Compiler is a compiler for the OSIC language. OSIC stands for Objectiv Symbolic Instruction Code and should be 
+OSIC Compiler is a compiler for the OSIC language. OSIC stands for ```Objectiv Symbolic Instruction Code``` and should be 
 completely compilable to a wide spectrum of machines in addition to a programming language that is very easy to learn.
 
 ### Build status
@@ -21,6 +21,12 @@ This Compiler/Interpreter requires GCC.
 ```sh
 $ apt-get install build-essential
 ```
+
+If you run with Arch you shoud add Development stuff. This wil install all gcc need for you.
+```sh
+$ sudo pacman -Syu --needed base-devel
+```
+
 
 To test the Compiler (this is far away from productive Use).
 
@@ -81,7 +87,7 @@ sudo apt-get install default-libmysqlclient-dev
 Windows Platform
 ----------------
 
-Lemon can build on Windows via [Mingw](http://www.mingw.org/wiki/Install_MinGW),
+OSIC can build on Windows via [Mingw](http://www.mingw.org/wiki/Install_MinGW),
 getting source code and use command
 
 ```
