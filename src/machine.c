@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <stdbool.h>
 
 struct machine *
 machine_create(struct osic *osic)
@@ -2050,7 +2051,7 @@ osic_machine_execute_loop(struct osic *osic)
 }
 
 void
-machine_disassemble(struct osic *osic)
+machine_disassemble(struct osic *osic, bool line_numbers)
 {
 	int a;
 	int b;
@@ -2059,13 +2060,13 @@ machine_disassemble(struct osic *osic)
 	int e;
 	int operative_code;
 	struct machine *machine;
-
 	machine = osic->l_machine;
 	machine->pc = 0;
 	while (machine->pc < machine->maxpc) {
 		operative_code = machine_fetch_code1(osic);
-
-		printf("%d: ", machine->pc-1);
+		if(line_numbers){
+			printf("%d: ", machine->pc-1);
+		}
 
 		switch (operative_code) {
 		case OPERATIVE_CODE_HALT:

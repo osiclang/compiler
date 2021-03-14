@@ -2,6 +2,7 @@
 #define OSIC_VM_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "osic.h"
 #include "oFrame.h"
@@ -101,6 +102,6 @@ machine_throw(struct osic *osic,
               struct oobject *object);
 
 void
-machine_disassemble(struct osic *osic);
+machine_disassemble(struct osic *osic, bool line_numbers);
 
 #endif /* osic_VM_H */

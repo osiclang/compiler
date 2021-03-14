@@ -11,6 +11,7 @@
 #include "oTable.h"
 
 #include <string.h>
+#include <stdbool.h>
 
 int
 check_paren_is_closed(char *code, int len)
@@ -200,9 +201,11 @@ shell(struct osic *osic)
 	int nlocals;
 	struct oobject *locals[256];
 
-	puts("osic Version 0.0.1");
-	puts("Copyright 2018 by Swen Kalski");
-	puts("Type '\\help' for more information, '\\exit' ");
+	puts("osic Version 0.0.2");
+	puts("Copyright 2021 by Swen Kalski");
+	puts("");
+	puts("Type 'help' for more information, 'exit' ");
+	puts("");
 
 	pc = 0;
 	codelen = 0;
@@ -222,21 +225,26 @@ shell(struct osic *osic)
 		}
 		buffer[sizeof(buffer) - 1] = '\0';
 
-		if (strcmp(buffer, "\\help\n") == 0) {
-			printf("'\\dis'  print bytecode\n"
-			       "'\\list' print source code\n"
-			       "'\\exit' exit from shell\n");
+		if (strcmp(buffer, "help\n") == 0) {
+			printf("'dis'  print bytecode\n"
+					"'dis-nl'  print bytecode without linenumbers\n"
+			       	"'list' print source code to screen\n"
+			       	"'exit' exit from shell\n");
 			continue;
 		}
-		if (strcmp(buffer, "\\dis\n") == 0) {
-			machine_disassemble(osic);
+		if (strcmp(buffer, "dis\n") == 0) {
+			machine_disassemble(osic, true);
 			continue;
 		}
-		if (strcmp(buffer, "\\list\n") == 0) {
+		if (strcmp(buffer, "dis-nl\n") == 0) {
+			machine_disassemble(osic, false);
+			continue;
+		}
+		if (strcmp(buffer, "list\n") == 0) {
 			printf("%.*s", codelen, code);
 			continue;
 		}
-		if (strcmp(buffer, "\\exit\n") == 0) {
+		if (strcmp(buffer, "exit\n") == 0) {
 			break;
 		}
 
