@@ -17,29 +17,33 @@ import (
 var OutStream io.Writer = os.Stdout
 
 var builtins = map[string]*object.Builtin{
-	"len":     &object.Builtin{Fn: length},
-	"first":   &object.Builtin{Fn: first},
-	"last":    &object.Builtin{Fn: last},
-	"rest":    &object.Builtin{Fn: rest},
-	"lead":    &object.Builtin{Fn: lead},
-	"push":    &object.Builtin{Fn: push},
-	"pop":     &object.Builtin{Fn: pop},
-	"alloc":   &object.Builtin{Fn: alloc},
-	"set":     &object.Builtin{Fn: set},
-	"join":    &object.Builtin{Fn: join},
-	"split":   &object.Builtin{Fn: split},
-	"println": &object.Builtin{Fn: println},
-	"print":   &object.Builtin{Fn: print},
-	"readln":  &object.Builtin{Fn: readln},
-	"read":    &object.Builtin{Fn: read},
-	"readc":   &object.Builtin{Fn: readc},
-	"readall": &object.Builtin{Fn: readall},
-	"atoi":    &object.Builtin{Fn: atoi},
-	"itoa":    &object.Builtin{Fn: itoa},
-	"in":      &object.Builtin{Fn: in},
-	"out":     &object.Builtin{Fn: out},
-	"rand":    &object.Builtin{Fn: random},
-	"sleep":   &object.Builtin{Fn: sleep},
+	"len":        &object.Builtin{Fn: length},
+	"first":      &object.Builtin{Fn: first},
+	"last":       &object.Builtin{Fn: last},
+	"rest":       &object.Builtin{Fn: rest},
+	"lead":       &object.Builtin{Fn: lead},
+	"push":       &object.Builtin{Fn: push},
+	"pop":        &object.Builtin{Fn: pop},
+	"alloc":      &object.Builtin{Fn: alloc},
+	"set":        &object.Builtin{Fn: set},
+	"join":       &object.Builtin{Fn: join},
+	"split":      &object.Builtin{Fn: split},
+	"println":    &object.Builtin{Fn: println},
+	"print":      &object.Builtin{Fn: print},
+	"readln":     &object.Builtin{Fn: readln},
+	"read":       &object.Builtin{Fn: read},
+	"readc":      &object.Builtin{Fn: readc},
+	"readall":    &object.Builtin{Fn: readall},
+	"readfile":   &object.Builtin{Fn: readfile},
+	"writefile":  &object.Builtin{Fn: writefile},
+	"createfile": &object.Builtin{Fn: createfile},
+	"args":       &object.Builtin{Fn: args},
+	"atoi":       &object.Builtin{Fn: atoi},
+	"itoa":       &object.Builtin{Fn: itoa},
+	"in":         &object.Builtin{Fn: in},
+	"out":        &object.Builtin{Fn: out},
+	"rand":       &object.Builtin{Fn: random},
+	"sleep":      &object.Builtin{Fn: sleep},
 }
 
 func sleep(args ...object.Object) object.Object {
@@ -375,6 +379,51 @@ func readall(args ...object.Object) object.Object {
 	s, _ := ioutil.ReadAll(os.Stdin)
 
 	return &object.String{Value: string(s)}
+}
+
+func readfile(args ...object.Object) object.Object {
+	if len(args) != 1 {
+		return newError(token.Position{}, "readfile only takes one argument. given '%d'", len(args))
+	}
+	s, err := ioutil.ReadFile(args[0].String())
+	if err != nil {
+		return newError(token.Position{}, "readfile could not read file. given '%s'", args[0])
+	}
+
+	return &object.String{Value: string(s)}
+}
+
+func writefile(args ...object.Object) object.Object {
+	if len(args) > 2 || len(args) < 1 {
+		return newError(token.Position{}, "writefile only takes two arguments. given '%d'", len(args))
+	}
+	s := []byte(args[1].String())
+	ioutil.WriteFile(args[0].String(), s, 0644)
+
+	return ConstNil
+}
+
+func createfile(args ...object.Object) object.Object {
+	if len(args) != 1 {
+		return newError(token.Position{}, "writefile only takes one argument. given '%d'", len(args))
+	}
+	_, err := os.Create(args[0].String())
+	if err != nil {
+		return newError(token.Position{}, "createfile could not create file. given '%s'", args[0])
+	}
+
+	return ConstNil
+}
+
+func args(args ...object.Object) object.Object {
+	if len(args) != 0 {
+		return newError(token.Position{}, "args() take no arguments. given '%d'", len(args))
+	}
+	elems := make([]object.Object, len(os.Args), len(os.Args))
+	for i := range os.Args {
+		elems[i] = &object.String{Value: string(os.Args[i])}
+	}
+	return &object.Array{Elements: elems}
 }
 
 func in(args ...object.Object) object.Object {

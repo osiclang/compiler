@@ -1,10 +1,10 @@
 <img src="https://github.com/OSIClang/compiler/blob/master/logo/logo_with_font_small.png">
 
 # OSIC Language Interpreter
-This Version is the Reboot of OSIC Language and move from a JAVAish Syntax to his very own.
-The Language is designed to create fast and simple Web Apps and API with buildin Server and an extensible Package System.
+This Version is the Reboot of OSIC Language and moves from a JAVAish Syntax to his very own.
+The Language is designed to create fast and simple Web Apps and API with a built-in Server and an extensible Package System.
 
-The actual implementation is Version 21, typical internal known as O21.
+The actual implementation is Version 21, a typical internal known as O21.
 
 ### Builds
 
@@ -13,10 +13,12 @@ The actual implementation is Version 21, typical internal known as O21.
 
 ### Everything is a method
 
-O doesn't have classes or methods, not even variables.
+OSIC doesn't have classes or methods, not even variables.
 Because at least everything is a method. This makes it fast to write and develop.
 
-`let a = "hello"`
+```
+let a = "hello"
+```
 This is a Method that simply returns a string (every language do it this way!)
 
 ```
@@ -98,7 +100,7 @@ println(name)
 ## More examples can be found in the examples folder
 map and reduce functional examples
 
-## Some langauge examples
+## Some language examples
 ### let statements
 ```
 // let statements are the basis of creating variables

@@ -1,0 +1,27 @@
+// read all given arguments into variable args
+let args = args()
+
+let iter = -> a -> {
+    let index = 0
+    let array = a
+    let item = a[0]
+
+    // inside the method for the iteration we create a next() method
+    let next = -> -> {
+        ret if index < len(array) {
+            item = array[index]
+            index+=1
+            ret item
+        }
+    }
+
+    // in fact that we created a method to iterate, we have to return it
+    ret -> -> iter
+}
+
+// here we start
+
+let it = iter(args)
+while it.next() {
+    println(it.item)
+}

@@ -1,0 +1,16 @@
+print("[now let us read the text to a existing file]")
+
+let text = readfile("examples/readfile/test.txt")
+print(text)
+
+print("[now let us write the text to a file]")
+
+let newFile = "examples/readfile/writetest.txt"
+
+createfile(newFile)
+writefile(newFile, text)
+
+print("[now let us read the text from the new file]")
+
+let writetext = readfile(newFile)
+print(writetext)

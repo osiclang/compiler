@@ -8,13 +8,12 @@ import (
 )
 
 func main() {
-	switch len(os.Args) {
-	case 1: // run repl
+	if len(os.Args) == 1 {
 		restart := true
 		for restart {
 			restart = repl.Run(os.Stdin, os.Stdout)
 		}
-	case 2: // run file
+	} else {
 		file, err := os.Open(os.Args[1])
 		if err != nil {
 			fmt.Println("Error reading file:", err)
