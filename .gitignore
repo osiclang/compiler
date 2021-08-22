@@ -21,7 +21,6 @@
 
 # caching files
 **/*.db
-/bin/
 **/*.so
 
 # KDevelop
