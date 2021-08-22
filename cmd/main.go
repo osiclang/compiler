@@ -5,6 +5,7 @@ import (
 	"olang/pkg/repl"
 	"olang/pkg/run"
 	"os"
+	"path"
 )
 
 func main() {
@@ -20,6 +21,6 @@ func main() {
 			return
 		}
 		defer file.Close()
-		run.Run(file, os.Stdout, os.Args[1], nil)
+		run.Run(file, os.Stdout, os.Args[1], string(path.Dir(file.Name())), nil)
 	}
 }

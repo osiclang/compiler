@@ -1,3 +1,4 @@
+///NOIMPORT
 
 print("give list of stuff <thing, thing, thing>: ")
 let stuff = readln!

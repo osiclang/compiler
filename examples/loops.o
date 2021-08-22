@@ -1,3 +1,4 @@
+///NOIMPORT
 
 println("while loop inc")
 let i = 0

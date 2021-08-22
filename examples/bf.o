@@ -1,3 +1,4 @@
+///NOIMPORT
 
 let sp = 0
 let stack = alloc(1024, 0)

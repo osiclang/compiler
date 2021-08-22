@@ -6,6 +6,8 @@ import (
 	"io"
 	"io/ioutil"
 	"olang/pkg/token"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -36,11 +38,30 @@ type Lexer struct {
 }
 
 // WithReader creates a new Lexer from the reader
-func WithReader(reader io.Reader, filename string) *Lexer {
+func WithReader(reader io.Reader, filename string, path string) *Lexer {
 	b, err := ioutil.ReadAll(reader)
 	if err != nil {
 		panic(err)
 	}
+
+	if path == "" {
+		path = "."
+	}
+
+	filepath.Walk(path,
+		func(filePath string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if !info.IsDir() && strings.Contains(info.Name(), ".o") {
+				file, _ := os.Open(filePath)
+				content, _ := ioutil.ReadFile(file.Name())
+				if !strings.Contains(string(content), "///NOIMPORT") {
+					b = append(content, b...)
+				}
+			}
+			return nil
+		})
 
 	l := &Lexer{buff: b}
 	l.init(filename)

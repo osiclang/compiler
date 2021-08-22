@@ -1,3 +1,5 @@
+///NOIMPORT
+
 print("[now let us read the text to a existing file]")
 
 let text = readfile("examples/readfile/test.txt")

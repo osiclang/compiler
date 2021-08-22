@@ -12,6 +12,7 @@ import (
 	"olang/pkg/object"
 	"olang/pkg/parser"
 	"os"
+	"path"
 	"strings"
 	"time"
 )
@@ -100,7 +101,7 @@ func Run(in io.Reader, out io.Writer) bool {
 				log.Fatalln("Failed to read file", fname)
 				return false
 			}
-			l := lexer.WithReader(file, fname)
+			l := lexer.WithReader(file, fname, string(path.Dir(file.Name())))
 			p := parser.New(l)
 			program := p.ParseProgram()
 			eval.Eval(program, env, nil)

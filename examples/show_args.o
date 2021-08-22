@@ -1,3 +1,5 @@
+///NOIMPORT
+
 // read all given arguments into variable args
 let args = args()
 
