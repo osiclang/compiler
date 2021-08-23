@@ -1,0 +1,5 @@
+///NOIMPORT
+
+print("what's your name? ")
+let name = readln!
+println("hello, " + name)

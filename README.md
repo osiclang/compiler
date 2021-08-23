@@ -1,129 +1,340 @@
-
 <img src="https://github.com/OSIClang/compiler/blob/master/logo/logo_with_font_small.png">
-OSIC Compiler is a compiler/interpreter for the OSIC language. OSIC stands for `Objectiv Symbolic Instruction Code` and should be 
-completely compilable to a wide spectrum of machines in addition to a programming language that is very easy to learn.
 
-### Build status
-[![Build Status](https://travis-ci.org/OSIClang/compiler.svg?branch=master)](https://travis-ci.org/OSIClang/compiler)
+# OSIC Language Interpreter
+This Version is the long planed reboot of OSIC Language and moves from a JAVAish Syntax to his very own more simple one.
+The Language is designed to create fast and simple Web Apps and API with a built-in Server and an extensible Package System.
 
-### Docs
+The actual implementation is Version 21, a typical internal known as O21.
 
-OSIC Documentations:
+### Builds
 
-* [Docs](commands.md) - How to write code with OSIC language 
-* `src` source code of OSIC compiler and interpreter
-* `lib` source code of core OSIC library
-
-### How to Use
-
-This Compiler/Interpreter requires GCC.
-
-```sh
-$ apt-get install build-essential
-```
-
-If you run with Arch you shoud add Development stuff. This wil install all gcc need for you.
-```sh
-$ sudo pacman -Syu --needed base-devel
-```
+[![Build Status](https://travis-ci.org/travis-ci/travis-web.svg?branch=master)](https://travis-ci.org/travis-ci/travis-web)
 
 
-To test the Compiler (this is far away from productive Use).
+# Language Concept
 
-```sh
-$ osic example.osic
-```
+### Everything is a method
 
-Enter interpreter "live mode"
-
-```sh
-$ ./osic
-```
-
-To exit the "live mode" just insert `\exit`
-
-
-
-### Build Instructions
-```
-make
-```
-or
+OSIC doesn't have classes or methods, not even variables.
+Because at least everything is a method. This makes it fast to write and develop.
 
 ```
-make DEBUG=0 STATIC=0 USE_MALLOC=0 MODULE_OS=1 MODULE_SOCKET=1
+let a = "hello"
 ```
-
-* `DEBUG`, debug compiler flags as boolean- in this case `false`
-* `STATIC`, 0 build with dynamic-linked library, 1 build with static-linked.
-* `USE_MALLOC`, stdlib's `malloc` ensure return aligned pointer
-* `MODULE_OS`, for POSIX builtin os library is true
-* `MODULE_SOCKET`, for BSD Socket builtin library is true
-
-### Build Modules
-
-For prce module (Perl Compatible Regular Expressions)
-```
-sudo apt-get install libpcre3-dev
-cd modules/oPcre/
-make
-```
-
-For mysql connection module
-```
-cd modules/oMysql/
-make
-```
-
-If you can not make the file -try installing the mysql sources
-```
-sudo apt-get install libmysqlclient-dev
-```
-If you using Debian and got an Error while installation of libmysqlclient-dev, try:
-```
-sudo apt-get install default-libmysqlclient-dev
-```
-
-Windows Platform
-----------------
-
-OSIC can build on Windows via [Mingw](http://www.mingw.org/wiki/Install_MinGW),
-getting source code and use command
+This is a Method that simply returns a string (every language do it this way!)
 
 ```
-mingw32-make
+let shrink = -> n -> {
+  ret height - n      // return statement
+}
+```
+This is a Method that returns something... easy...
+So why there wouldn't be functions with functions in it, they can even have functions in it... cool, eh?
+
+```
+// define a recursive iterative sum function
+let sum = -> nums -> {
+    let sumIter = -> nums, s -> {
+      if first(nums) == nil: s
+      else sumIter(rest(nums), first(nums)+s)
+    }
+    ret sumIter(nums, 0)
+}
+
+let resultA = sum(nums)
+```
+This is what coding should be... freaking fast and free
+
+Ahhh, wait... we are also OOP with using Methods as well.. the 2000's calling :-)
+```
+let person = -> n -> {                          // person acts like a construtor returning a 'new' person
+  let name = n                              // local variable 'name'
+  let sayhi = -> -> println("hello, " + name)  // local function 'sayhi'
+  ret -> -> person                             // return a closure of self. This is the new class
+}
+
+let p1 = person("ted")
+let p2 = person("bob")
+
+p1.name              // prints "ted"
+p2.name = "kyle"    // change p2's name to "kyle"
+p2.sayhi!          // prints "hello, kyle"
+
 ```
 
-### Porting
+### Import of code
 
-`lib/os.c` and `lib/socket.c` are supporting POSIX and Microsoft Windows environment. Ensure you have a compatible Windows Build environment installed.
+Everything that is available in the root of the Programm will be imported. This includes all subfolder.
+The Interpreter will search for it and add it in front of the main script.
 
-### Use OSIC as compiler
+If there is a script inside, that should stay alone you can simply add the `///NOIMPORT` statement in the first line of a script.
+The script will be ignored by other scripts.
 
-initialize and set parameter to your source code
+### First come is served first
 
-Example from `main.c`
+OSIC handel the Code line by line. In this meaning you should create classes and methods before you use them.
 
-	struct osic *osic;
-	osic = osic_create();
-	builtin_init(osic);
+```
+// this will not work
 
-	lobject_set_item(osic, 
-			 osic->l_modules,
-			 lstring_create(osic, "os", 2),
-			 os_module(osic));
-	osic_input_set_file(OSIC, "your_osic_source.osic");
-	osic_compile(OSIC);
-	osic_machine_reset(OSIC);
-	osic_machine_execute(OSIC);
+let p1 = person("ted")
+let p2 = person("bob")
 
-Everything start with `osic_create()`, this function initialize all parts of OSIC, 
-and all required objects. After `osic_create` initialize module 
-with `builtin_init`, and manual initialize `os_module`, there is the place you add custom module.  
-Use `osic_input_set_file` set OSIC source code file or `osic_input_set_buffer` set source code from string instead file.  
-Use `osic_compile` compile source code, use `osic_machine_reset` reset machine and finally `osic_machine_execute` execute code. 
+let person = -> n -> { 
+  let name = n
+  let sayhi = -> -> println("hello, " + name) 'sayhi'
+  ret -> -> person
+}
+```
+This Code will end up with an error. You should better move the Class `person` to the top or create an own file for it.
 
-This is not the final way. It would changed in the future.
+Best practice would be:
+
+File: `main.o`
+```
+let p1 = person("ted")
+let p2 = person("bob")
+
+p1.name
+p2.name = "kyle"
+p2.sayhi!  
+
+```
+
+File: `person.o`
+```
+let person = -> n -> { 
+  let name = n
+  let sayhi = -> -> println("hello, " + name) 'sayhi'
+  ret -> -> person
+}
+```
+
+When you run `main.o` the file `person.o` will be imported if it is in the same folder or in a subfolder and parsed before `main.o`.
+
+
+# Keywords
+There is a small set of keywords to keep the language simple as possible. Most functionality comes from expressions and symbols
+
+|Command |Example  | Description|
+--- | --- | ---
+|let|`let a = "hello"`|defines a variable, method or class|
+|if|`if a == "hello": sayhi!`|a if statement|
+|while|`while a > 0: sayhi!` or `while p = pop(a): println(p)`|create a while loop|
+|else|`if a == "hello": sayhi! else saybye!`|the else statement for if's|
+|ret|`ret 4`|a return statement to return a value from a method| 
+
+# Common types
+
+|Type |Example  | Description|
+--- | --- | ---
+|true| `let b = true` |a boolean type of TRUE|
+|false| `let b = false` | a boolean type of FALSE|
+|nil| `if pop(a) == nil: "error"` or `if !pop(a): "error"`| a NULL |type|
+|int|`let b = 1`|a 64bit integer|
+|float|`let b = 1.0`|a 64bit float|
+|bool|`let b = false` or `let b = true`|a boolean|
+|string|`let b = "OSIC is nice"`|a string|
+|error|`if pop(a) == nil: "error"`|a string that reflects an Error|
+|array|`let a = [1,2,3,4]`|a Array of Common types|
+
+# Examples
+
+## Hello World 
+
+```
+println("Hello, world!")
+```
+
+## Hello with User Input
+
+```
+let name = readln!
+println(name)
+```
+
+## More examples can be found in the examples folder
+map and reduce functional examples
+
+## Some language examples
+### let statements
+```
+// let statements are the basis of creating variables
+
+let name = "friendo"             // bind a string literal
+let hobby = 'unit testing'      // bind another string using single quote
+let age = 20                   // bind a int64 literal
+let height = 187.3            // bind a float64 literal
+
+let array = [name, hobby, age, height] // put them into an array
+
+```
+
+### operations on strings and arrays
+```
+let a = 'buddy'
+a[0]  // 'b'
+a[-1] // 'y'  arrays/strings wrap negatively around back to 0
+
+let chant = [2,4,6,8]
+chant = push(chant, "who do we appreciate?") // appends the string to the back of chant and returns the new array
+
+// alternately you can use the '+' or  '+=' to concat arrays
+chant += ["infix operators!"]
+```
+
+### Builtin functions
+Builtin functions are functions that allowing to do common operations for Strings, Files etc. 
+
+### basic array functions
+```
+let a = [1,2,3,4]
+len(a)     // 4
+first(a)   // 1
+last(a)    // 4
+rest(a)    // 2,3,4
+lead(a)    // 1,2,3
+push(a, 5) // 1,2,3,4,5
+pop(a)     // 1,2,3,4
+alloc(256, 'a') // creates an array of 256 a's.. can be any value
+set(a, 0, 6) // a[0] = 6,2,3,4
+```
+
+### basic string functions
+```
+let s = "hello, friend"
+split(s, '')     // splits s into an array of it's characters ['h', 'e', 'l', 'l' ... ]
+split(s, ', ')  // splits by ', '. ['hello', 'world']
+join(a, '')    // joins an array into a string of it's objects
+join(a, '.')  // joins with a '.' in between each element
+```
+
+### Input and Output functions
+
+With these builtins you can write to console
+println(*object)
+print(*object)
+
+With these builtins you can read users input of the console
+readln()
+read()
+readc()
+readall()
+
+### read arguments
+`let args = args()`
+args() return a array of string of all Arguments that where given.
+This includes the interpreter, the filename and everything after.
+
+### File operations
+```
+//read a textfile
+let text = readfile("test.txt")
+
+// create a file
+createfile("newFile.txt")
+
+// write some String to file
+writefile(newFile, "Some Text")
+
+```
+
+### Conversion
+```
+atoi('a')  // 97
+itoa(97)   // 'a'
+```
+
+### Functions
+```
+// functions are literals aswell (see the beginning of this Readme.md)
+// functions are defined with the '->' arg1, arg2 '->' syntax
+// return statement is 'ret'
+
+// if a function only has one statement or expression it can directly follow the definition on the same line
+let birthday = -> -> age += 1      // function with no args. increments age by 1
+
+// if there is more than one line use braces starting on the same line
+let shrink = -> n -> {
+  ret height - n      // return statement
+}
+
+let grow = -> n -> {
+  height + n          // return statement is optional if the last statement if the result to be returned
+}
+
+// usages
+
+// when a function call has no args you can optionally use '!' syntax instead of '()'
+birthday!   // optionally birthday()
+
+let newHeight = grow(45)
+newHeight = shrink(age) // assign newHeight to the result of shrink
+```
+### power operator
+```
+// power operator
+4^3 // returns 4 to the power of 3
+```
+### If statements
+```
+// compact syntax
+if true: "yes" else "no"
+
+// full syntax
+if true {
+  ret "yes"
+} else {
+  ret "no"
+}
+
+// syntax can be mixed and matched
+if true {
+  if a == b: "yes" else {
+    ret "no"
+  }
+} else "no"
+
+// if else
+if a == 1 {
+  "one"
+} else if a == 2 {
+  "two"
+} else "huge!"
+```
+### Closures
+```
+// define a function that takes one arg and returns a function that sums it's argument together
+
+let newAdder = -> a -> {
+  ret -> b -> {
+    ret a + b
+  }
+}
+// compact syntax of same definition let newAdder = -> a-> -> b -> a + b
+
+let add2 = newAdder(2)
+
+add2(4) // 6
+```
+
+### Classes
+```
+let person = -> n -> {                          // person acts like a construtor returning a 'new' person
+  let name = n                              // local variable 'name'
+  let sayhi = -> -> println("hello, " + name)  // local function 'sayhi'
+  ret -> -> person                             // return a closure of self. This is the new class
+}
+
+let p1 = person("ted")
+let p2 = person("bob")
+
+p1.name              // prints "ted"
+p2.name = "kyle"    // change p2's name to "kyle"
+p2.sayhi!          // prints "hello, kyle"
+
+```
+### Help improving OSIC
 
 # Add your Review (a little checklist)
 - Make sure that methods of styling are similar to already existing related methods. Look at POJO's and helpers. This ensures that the code has a readable style.
