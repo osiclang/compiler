@@ -1,7 +1,7 @@
 <img src="https://github.com/OSIClang/compiler/blob/master/logo/logo_with_font_small.png">
 
 # OSIC Language Interpreter
-This Version is the Reboot of OSIC Language and moves from a JAVAish Syntax to his very own.
+This Version is the long planed reboot of OSIC Language and moves from a JAVAish Syntax to his very own more simple one.
 The Language is designed to create fast and simple Web Apps and API with a built-in Server and an extensible Package System.
 
 The actual implementation is Version 21, a typical internal known as O21.
@@ -10,6 +10,8 @@ The actual implementation is Version 21, a typical internal known as O21.
 
 [![Build Status](https://travis-ci.org/travis-ci/travis-web.svg?branch=master)](https://travis-ci.org/travis-ci/travis-web)
 
+
+# Language Concept
 
 ### Everything is a method
 
@@ -60,27 +62,81 @@ p2.sayhi!          // prints "hello, kyle"
 
 ```
 
+### Import of code
+
+Everything that is available in the root of the Programm will be imported. This includes all subfolder.
+The Interpreter will search for it and add it in front of the main script.
+
+If there is a script inside, that should stay alone you can simply add the `///NOIMPORT` statement in the first line of a script.
+The script will be ignored by other scripts.
+
+### First come is served first
+
+OSIC handel the Code line by line. In this meaning you should create classes and methods before you use them.
+
+```
+// this will not work
+
+let p1 = person("ted")
+let p2 = person("bob")
+
+let person = -> n -> { 
+  let name = n
+  let sayhi = -> -> println("hello, " + name) 'sayhi'
+  ret -> -> person
+}
+```
+This Code will end up with an error. You should better move the Class `person` to the top or create an own file for it.
+
+Best practice would be:
+
+File: `main.o`
+```
+let p1 = person("ted")
+let p2 = person("bob")
+
+p1.name
+p2.name = "kyle"
+p2.sayhi!  
+
+```
+
+File: `person.o`
+```
+let person = -> n -> { 
+  let name = n
+  let sayhi = -> -> println("hello, " + name) 'sayhi'
+  ret -> -> person
+}
+```
+
+When you run `main.o` the file `person.o` will be imported if it is in the same folder or in a subfolder and parsed before `main.o`.
+
+
 # Keywords
 There is a small set of keywords to keep the language simple as possible. Most functionality comes from expressions and symbols
 
-- let    
-`let a = "hello"`
-- if  
-`if a == "hello": sayhi!`
-- while
-`while a > 0: sayhi!`
-`while p = pop(a): println(p)`
-- else
-`if a == "hello": sayhi! else saybye!`
-- ret
-`ret 4` 
-- true
-`let b = true`
-- false
-`let b = false`
-- nil
-`if pop(a) == nil: "error"`
-`if !pop(a): "error"`
+|Command |Example  | Description|
+--- | --- | ---
+|let|`let a = "hello"`|defines a variable, method or class|
+|if|`if a == "hello": sayhi!`|a if statement|
+|while|`while a > 0: sayhi!` or `while p = pop(a): println(p)`|create a while loop|
+|else|`if a == "hello": sayhi! else saybye!`|the else statement for if's|
+|ret|`ret 4`|a return statement to return a value from a method| 
+
+# Common types
+
+|Type |Example  | Description|
+--- | --- | ---
+|true| `let b = true` |a boolean type of TRUE|
+|false| `let b = false` | a boolean type of FALSE|
+|nil| `if pop(a) == nil: "error"` or `if !pop(a): "error"`| a NULL |type|
+|int|`let b = 1`|a 64bit integer|
+|float|`let b = 1.0`|a 64bit float|
+|bool|`let b = false` or `let b = true`|a boolean|
+|string|`let b = "OSIC is nice"`|a string|
+|error|`if pop(a) == nil: "error"`|a string that reflects an Error|
+|array|`let a = [1,2,3,4]`|a Array of Common types|
 
 # Examples
 
@@ -128,8 +184,10 @@ chant += ["infix operators!"]
 ```
 
 ### Builtin functions
+Builtin functions are functions that allowing to do common operations for Strings, Files etc. 
+
+### basic array functions
 ```
-// basic array functions
 let a = [1,2,3,4]
 len(a)     // 4
 first(a)   // 1
@@ -140,30 +198,56 @@ push(a, 5) // 1,2,3,4,5
 pop(a)     // 1,2,3,4
 alloc(256, 'a') // creates an array of 256 a's.. can be any value
 set(a, 0, 6) // a[0] = 6,2,3,4
+```
 
-// basic string functions
+### basic string functions
+```
 let s = "hello, friend"
 split(s, '')     // splits s into an array of it's characters ['h', 'e', 'l', 'l' ... ]
 split(s, ', ')  // splits by ', '. ['hello', 'world']
 join(a, '')    // joins an array into a string of it's objects
 join(a, '.')  // joins with a '.' in between each element
+```
 
-// i/o functions
-println
-print
-readln
-read
-readc
-readall
+### Input and Output functions
 
-// conversion
+With these builtins you can write to console
+println(*object)
+print(*object)
+
+With these builtins you can read users input of the console
+readln()
+read()
+readc()
+readall()
+
+### read arguments
+`let args = args()`
+args() return a array of string of all Arguments that where given.
+This includes the interpreter, the filename and everything after.
+
+### File operations
+```
+//read a textfile
+let text = readfile("test.txt")
+
+// create a file
+createfile("newFile.txt")
+
+// write some String to file
+writefile(newFile, "Some Text")
+
+```
+
+### Conversion
+```
 atoi('a')  // 97
 itoa(97)   // 'a'
 ```
 
-### functions
+### Functions
 ```
-// functions are literals aswell
+// functions are literals aswell (see the beginning of this Readme.md)
 // functions are defined with the '->' arg1, arg2 '->' syntax
 // return statement is 'ret'
 
