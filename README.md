@@ -236,8 +236,12 @@ createfile("newFile.txt")
 
 // write some String to file
 writefile(newFile, "Some Text")
-
 ```
+### File bultin commands 
+`readfile(*STRING)` read a file filename *STRING
+`createfile(*STRING)` creates a file filename *STRING
+`writefile(*STRING, *OBJECT)` write *Objects String representation a filename *STRING
+`readdir(*STRING, *BOOLEAN)` reads all Filenames with Path from directory *STRING (*BOOLEAN is for recursive - non optional)  
 
 ### Conversion
 ```

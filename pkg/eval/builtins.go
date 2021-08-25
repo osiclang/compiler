@@ -9,6 +9,7 @@ import (
 	"olang/pkg/object"
 	"olang/pkg/token"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -37,6 +38,7 @@ var builtins = map[string]*object.Builtin{
 	"readfile":   &object.Builtin{Fn: readfile},
 	"writefile":  &object.Builtin{Fn: writefile},
 	"createfile": &object.Builtin{Fn: createfile},
+	"readdir":    &object.Builtin{Fn: readDir},
 	"args":       &object.Builtin{Fn: args},
 	"atoi":       &object.Builtin{Fn: atoi},
 	"itoa":       &object.Builtin{Fn: itoa},
@@ -413,6 +415,50 @@ func createfile(args ...object.Object) object.Object {
 	}
 
 	return ConstNil
+}
+
+func readDir(args ...object.Object) object.Object {
+	if len(args) != 2 {
+		return newError(token.Position{}, "readdir only takes two arguments. given '%d'", len(args))
+	}
+	switch arg := args[1].(type) {
+	case *object.Boolean:
+		recursive := arg
+		b := []string{}
+
+		if recursive.Value {
+			filepath.Walk(args[0].String(),
+				func(filePath string, info os.FileInfo, err error) error {
+					if err != nil {
+						return nil
+					}
+					if !info.IsDir() {
+						file, _ := os.Open(filePath)
+						b = append(b, string(file.Name()))
+					}
+					return nil
+				})
+		} else {
+			file, err := os.Open(args[0].String())
+			if err != nil {
+
+			}
+			defer file.Close()
+
+			list, _ := file.Readdirnames(0) // 0 to read all files and folders
+			for _, name := range list {
+				b = append(b, name)
+			}
+		}
+		elems := make([]object.Object, len(b), len(b))
+		for i := range b {
+			elems[i] = &object.String{Value: b[i]}
+		}
+		return &object.Array{Elements: elems}
+	default:
+		return newError(token.Position{}, "argument 2 must be bool for recursive readdir, got '%s'", args[1].Type())
+	}
+
 }
 
 func args(args ...object.Object) object.Object {
