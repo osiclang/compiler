@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"flag"
 	"olang/pkg/libs/ml/regression/learn"
 	"olang/pkg/libs/ml/regression/learn/slice"
 	"olang/pkg/libs/ml/regression/learn/vectorized"
@@ -11,12 +10,12 @@ import (
 )
 
 var neuronals = map[string]*object.Neuronal{
-	"linRegres":       {Fn: linearRegression},
-	"linRegresOnFile": {Fn: linearRegressionOnFile},
+	"linRegres": {Fn: linearRegression},
 }
 
+// linRegres(alpha int, iterations int, isVectorized bool)
+// performs a linearRegression on a set two dimensional set of values
 func linearRegression(args ...object.Object) object.Object {
-
 	var isVectorized bool
 	var alpha float64
 	var iteration int
@@ -46,6 +45,8 @@ func linearRegression(args ...object.Object) object.Object {
 		return newError(token.Position{}, "isVectorized must be Boolean, got '%s'", args[0].Type())
 	}
 
+	// TODO, we need matricies now!
+
 	config := learn.LearnConfiguration{
 		NumberIteration: iteration,
 		Alpha:           alpha,
@@ -65,38 +66,11 @@ func linearRegression(args ...object.Object) object.Object {
 	float64s := make(chan float64, length)
 	go predictO.Predict(float64s)
 
-	//writeData(*resultFile, float64s)
-}
-
-func linearRegressionOnFile(args ...object.Object) object.Object {
-
-	if len(args) != 3 {
-		return newError(token.Position{}, "wrong number of arguments. got '%d', expected '3'", len(args))
+	elems := make([]object.Object, len(float64s), len(float64s))
+	i := 0
+	for curVal := range float64s {
+		elems[i] = &object.Float{Value: curVal}
+		i++
 	}
-
-	//trainingFile := flag.String("training_file_path", "data_simple.txt", "a training csv file ")
-	alpha := flag.Float64("alpha_value", 0.2, "gradient step")
-	iteration := flag.Int("iteration_number", 1000, "training iteration")
-	isVectorized := flag.Bool("vectorized_version", false, "")
-
-	config := learn.LearnConfiguration{
-		NumberIteration: *iteration,
-		Alpha:           *alpha,
-	}
-	var predictO predict.Predict
-	var learnO learn.Learn
-	if *isVectorized {
-		learnO = vectorized.NewlearnVectorized()
-	} else {
-		learnO = slice.NewlearnSlice()
-	}
-	predictO, err := learnO.Learn(config)
-	if err != nil {
-		return newError(token.Position{}, "Error on linearRegression")
-	}
-	length := predictO.PredictLength()
-	float64s := make(chan float64, length)
-	go predictO.Predict(float64s)
-
-	//writeData(*resultFile, float64s)
+	return &object.Array{Elements: elems}
 }
