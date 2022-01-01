@@ -42,9 +42,9 @@ func WithReader(reader io.Reader, filename string, path string) *Lexer {
 	if err != nil {
 		panic(err)
 	}
-	deps, err := preproc.GetDeps(b)
+	deps, err := preproc.GetDeps(b, path)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	b = append(deps, b...)
 

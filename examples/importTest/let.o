@@ -1,1 +1,4 @@
-print("this is the second funtion")
+//_include sub/sub.o
+
+let somevar = "world"
+let someOtherVar = sayhello()

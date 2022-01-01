@@ -1,1 +1,3 @@
-print("i'm the sub context")
+let subvar = "hello"
+
+let sayhello = -> -> ret subvar + ", "

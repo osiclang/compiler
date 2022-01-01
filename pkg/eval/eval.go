@@ -546,10 +546,6 @@ func evalIdentifier(id *ast.Identifier, env *object.Environment) object.Object {
 		return builtin
 	}
 
-	if neuro, ok := neuronals[id.Value]; ok {
-		return neuro
-	}
-
 	return newError(id.Token.Pos, "identifier not found: %s", id.Value)
 }
 
@@ -566,10 +562,6 @@ func evalAccessIdentifier(id *ast.AccessIdentifier, env *object.Environment) obj
 
 	if builtin, ok := builtins[last]; ok {
 		return builtin
-	}
-
-	if neuro, ok := neuronals[last]; ok {
-		return neuro
 	}
 
 	return newError(id.Token.Pos, "identifier not found in context: %s", last)
