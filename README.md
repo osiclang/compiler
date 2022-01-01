@@ -67,11 +67,13 @@ p2.sayhi!          // prints "hello, kyle"
 
 ### Import of code
 
-Everything that is available in the root of the Programm will be imported. This includes all subfolder.
-The Interpreter will search for it and add it in front of the main script.
+If it is nessecary to Import code, you can use
+```
+//import some_folder/some_file.o
+```
+This will import code from other osic-source files into your code. 
+This code will proceed before the code from the importing source will run.
 
-If there is a script inside, that should stay alone you can simply add the `///NOIMPORT` statement in the first line of a script.
-The script will be ignored by other scripts.
 
 ### First come is served first
 
