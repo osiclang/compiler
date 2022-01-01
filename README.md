@@ -67,11 +67,13 @@ p2.sayhi!          // prints "hello, kyle"
 
 ### Import of code
 
-Everything that is available in the root of the Programm will be imported. This includes all subfolder.
-The Interpreter will search for it and add it in front of the main script.
+If it is nessecary to Import code, you can use
+```
+//import some_folder/some_file.o
+```
+This will import code from other osic-source files into your code. 
+This code will proceed before the code from the importing source will run.
 
-If there is a script inside, that should stay alone you can simply add the `///NOIMPORT` statement in the first line of a script.
-The script will be ignored by other scripts.
 
 ### First come is served first
 
@@ -345,7 +347,7 @@ p2.sayhi!          // prints "hello, kyle"
 
 # Add your Review (a little checklist)
 - Make sure that methods of styling are similar to already existing related methods. Look at POJO's and helpers. This ensures that the code has a readable style.
-- Do not leave TODO: Marks or comments in code. The code is more readable if there are no unnecessary comments in the code.
+- Do not leave TODOs: Marks or comments in code. The code is more readable if there are no unnecessary comments in the code.
 - Describe clearly in the pullrequest what the code does and which problem is solved. New features can be submitted as issues.
 
 # Code of Conduct
@@ -353,11 +355,4 @@ p2.sayhi!          // prints "hello, kyle"
 Everyone may feel invited to participate in this programming language.
 
 However, there are a few small rules to follow:
-- New features should be linguistically JAVA adhered to.
 - New code must always be reviewed by a code review and the pull request should explain exactly why the code should be changed.
-- Flavor questions are not to be found in the review. Neither from the reviewer nor from the requestor. This only consumes resources and quickly gives the feeling of a request to a perceived knowledge transfer.
-- In the JAVA and C scene there is too much narcissism. There is no narcissism here! Quickly more code or more complex code is written than necessary. This is normal and is part of the development process. Be kind!
-
-#tldr:
-- Short CoC: OSIC developer are really nice guys and women!
-- Shorter CoC: OSIC developer are the one who are what her dogs thinks they are!!

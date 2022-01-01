@@ -19,7 +19,7 @@ import (
 
 const (
 	prompt = "| "
-	intro  = "\033[2J\033[0;0O Programming Langaguge (o21 nightly). © Swen \"motomoto\" Kalski 2021\n\n"
+	intro  = "\033[2J\033[0;0O Programming Langaguge Version 22/02\nMore informations tensorthings.com - osiclang.com 2022\n\n"
 )
 
 type colorCode int8

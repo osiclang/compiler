@@ -1,0 +1,22 @@
+///NOIMPORT
+
+print("create new network")
+createNeuronet(10)
+
+print("set goals")
+//set two reactors
+setReactor(4,1,1,1)
+setReactor(5,1,1,2)
+
+//set two actors
+setActor(1,1,1,1)
+setActor(1,2,1,2)
+
+//set goals, how the neronal network should work in the end
+setGoal(1,1)
+setGoal(2,1)
+
+
+print("start evolving...")
+//let pattern evolve
+evolve()
