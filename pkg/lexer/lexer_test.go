@@ -92,7 +92,6 @@ let fail = 21
 		{token.String, "foo\tbar"},
 		{token.String, "foo\nbar"},
 		{token.Terminator, ";"},
-		{token.EOF, string(0)},
 	}
 
 	l := WithString(input, "lexer_test.go")

@@ -469,7 +469,7 @@ func TestLetStatements(t *testing.T) {
 }
 
 func TestFunctionObject(t *testing.T) {
-	input := "|x| x + 2;"
+	input := "-> x -> x + 2;"
 
 	evaluated := testEval(input)
 	fn, ok := evaluated.(*object.Function)
@@ -498,12 +498,12 @@ func TestFunctionApplication(t *testing.T) {
 		input    string
 		expected int64
 	}{
-		{"let identity = |x| { x; }; identity(5);", 5},
-		{"let identity = |x| { ret x; }; identity(5);", 5},
-		{"let double = |x| { x * 2; }; double(5);", 10},
-		{"let add = |x, y| { x + y; }; add(5, 5);", 10},
-		{"let add = |x, y| { x + y; }; add(5 + 5, add(5, 5));", 20},
-		{"|x| { x; }(5)", 5},
+		{"let identity = -> x -> { x; }; identity(5);", 5},
+		{"let identity = -> x -> { ret x; }; identity(5);", 5},
+		{"let double = -> x -> { x * 2; }; double(5);", 10},
+		{"let add = -> x, y -> { x + y; }; add(5, 5);", 10},
+		{"let add = -> x, y -> { x + y; }; add(5 + 5, add(5, 5));", 20},
+		{"-> x -> { x; }(5)", 5},
 	}
 
 	for _, tt := range tests {

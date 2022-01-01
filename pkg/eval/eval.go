@@ -488,14 +488,14 @@ func evalFloatInfixExpr(op token.Token, left, right object.Object) object.Object
 		return &object.Float{Value: leftVal * rightVal}
 	case token.Divide:
 		if rightVal == 0 {
-			return newError(op.Pos, "cannot divide %d by 0", leftVal)
+			return newError(op.Pos, "cannot divide %f by 0", leftVal)
 		}
 		return &object.Float{Value: leftVal / rightVal}
 	case token.Exp:
 		return &object.Float{Value: math.Pow(leftVal, rightVal)}
 	case token.Mod:
 		if rightVal == 0 {
-			return newError(op.Pos, "cannot modulo %d by 0", leftVal)
+			return newError(op.Pos, "cannot modulo %f by 0", leftVal)
 		}
 		return &object.Float{Value: math.Mod(leftVal, rightVal)}
 	case token.Less:
