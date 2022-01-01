@@ -7,7 +7,7 @@ The actual implementation is Version 22 (preview).
 
 ### Builds
 
-[![Build Status](https://travis-ci.org/travis-ci/travis-web.svg?branch=master)](https://travis-ci.org/travis-ci/travis-web)
+[![Go](https://github.com/osiclang/compiler/actions/workflows/go.yml/badge.svg)](https://github.com/osiclang/compiler/actions/workflows/go.yml)
 
 ### Binaries and Informations
 For further information, news and binaries, feel free to visit our major website [osiclang.com](https://osiclang.com)
