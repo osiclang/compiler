@@ -1,3 +1,13 @@
 {
-    "synthwave84.brightness": 0.9
+    "synthwave84.brightness": 0.9,
+    "go.gopath": "~/go",
+      "go.goroot": "/usr/local/go",
+      "go.formatTool": "goformat",
+      "go.autocompleteUnimportedPackages": true,
+      "[go]": {
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+          "source.organizeImports": true
+         }
+     }
 }

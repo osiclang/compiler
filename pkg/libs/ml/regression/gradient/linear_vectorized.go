@@ -1,15 +1,9 @@
 package gradient
 
-import (
-	"olang/pkg/libs/ml/regression/cost"
-
-	"gonum.org/v1/gonum/mat"
-	"gonum.org/v1/plot/plotter"
-)
+import "gonum.org/v1/gonum/mat"
 
 //Linear Gradient using Matrices
 func LinearGradientVectorized(X mat.Matrix, y mat.Matrix, theta mat.Matrix, alpha float64, num_iters int, printCostFunction bool) (mat.Matrix, error) {
-	pts := make(plotter.XYs, 0)
 	for i := 0; i < num_iters; i++ {
 
 		r, cx := X.Dims()
@@ -32,18 +26,6 @@ func LinearGradientVectorized(X mat.Matrix, y mat.Matrix, theta mat.Matrix, alph
 
 		// Update theta and start again
 		theta = RESULT
-
-		if printCostFunction && i%20 == 0 {
-			f, e := cost.ComputeCostvectorized(X, y, theta)
-			if e != nil {
-				return nil, e
-			}
-			pts = append(pts, plotter.XY{
-				X: float64(i),
-				Y: f,
-			})
-		}
-
 	}
 	return theta, nil
 }
