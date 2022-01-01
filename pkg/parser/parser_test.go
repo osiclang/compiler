@@ -592,9 +592,9 @@ func TestIfElseExpression(t *testing.T) {
 }
 
 func TestFunctionLiteralParsing(t *testing.T) {
-	inputs := []string{`|x, y| { x + y; }`,
-		`|x, y|: x + y;`,
-		`|x, y| x + y;`}
+	inputs := []string{`-> x, y -> { x + y; }`,
+		`-> x, y ->: x + y;`,
+		`-> x, y -> x + y;`}
 
 	for _, input := range inputs {
 
@@ -648,11 +648,14 @@ func TestFunctionParameterParsing(t *testing.T) {
 		input          string
 		expectedParams []string
 	}{
-		{input: "|| {};", expectedParams: []string{}},
-		{input: "|x| {};", expectedParams: []string{"x"}},
-		{input: "|x, y, z| {};", expectedParams: []string{"x", "y", "z"}},
-		{input: "|x, y, z| :;", expectedParams: []string{"x", "y", "z"}},
-		{input: "|| :;", expectedParams: []string{}},
+		{input: "-> -> {};", expectedParams: []string{}},
+		{input: "-> x -> {};", expectedParams: []string{"x"}},
+		{input: "-> x, y, z -> {};", expectedParams: []string{"x", "y", "z"}},
+		{input: "-> x, y, z -> :;", expectedParams: []string{"x", "y", "z"}},
+		{input: "-> -> :;", expectedParams: []string{}},
+		{input: "-> -> {}", expectedParams: []string{}},
+		{input: "-> x -> {}", expectedParams: []string{"x"}},
+		{input: "-> x, y, z -> {}", expectedParams: []string{"x", "y", "z"}},
 	}
 
 	for _, tt := range tests {
