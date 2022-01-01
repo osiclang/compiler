@@ -1,10 +1,9 @@
 <img src="https://github.com/OSIClang/compiler/blob/master/logo/logo_with_font_small.png">
 
 # OSIC Language Interpreter
-This Version is the long planed reboot of OSIC Language and moves from a JAVAish Syntax to his very own more simple one.
-The Language is designed to create fast and simple Web Apps and API with a built-in Server and an extensible Package System.
+OSIClanguage is an interpreter for the OSIC language. OSIC stands for `Objective Symbolic Instruction Code` and should be completely compatible with a wide spectrum of machines in addition to a programming language that is very easy to learn.
 
-The actual implementation is Version 21, a typical internal known as O21.
+The actual implementation is Version 22 (preview).
 
 ### Builds
 
