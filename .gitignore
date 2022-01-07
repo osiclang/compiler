@@ -3,6 +3,10 @@
 **/.idea/*
 **/*.iml
 
+# VSCode
+**/.vscode/
+**/.vscode/*
+
 # Eclipse files
 **/.project
 **/.classpath
