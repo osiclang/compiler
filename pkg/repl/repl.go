@@ -19,7 +19,7 @@ import (
 
 const (
 	prompt = "| "
-	intro  = "\033[2J\033[0;0O Programming Langaguge Version 22/02\nMore informations tensorthings.com - osiclang.com 2022\n\n"
+	intro  = "\033[2J\033[0;0O Programming Language Version %s\nMore informations tensorthings.com - osiclang.com 2022\n\n"
 )
 
 type colorCode int8
@@ -39,11 +39,11 @@ func color(v interface{}, color colorCode) string {
 }
 
 // Run starts the repl to read and run a line at a time
-func Run(in io.Reader, out io.Writer) bool {
+func Run(in io.Reader, out io.Writer, ver string) bool {
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	fmt.Fprint(out, intro)
+	fmt.Printf(intro, ver)
 
 	scanner := bufio.NewScanner(in)
 
@@ -67,7 +67,7 @@ func Run(in io.Reader, out io.Writer) bool {
 		case ":x", ":q", ":e":
 			return false
 		case ":c":
-			fmt.Fprint(out, intro)
+			fmt.Printf(intro, ver)
 			continue
 		case "use iter":
 			iter := `let iter = -> a -> {

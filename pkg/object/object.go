@@ -55,8 +55,6 @@ func (t Type) String() string {
 		return "function"
 	case BuiltinType:
 		return "builtin"
-	case NeuronalType:
-		return "neuronal"
 	case ArrayType:
 		return "array"
 	default:
@@ -291,31 +289,8 @@ func (b *Builtin) String() string {
 	return "builtin function"
 }
 
-// NeuronalFunction is a function with n args
-type NeuronalFunction func(args ...Object) Object
-
-// Neuronal is a Neuronal go-driven function
-type Neuronal struct {
-	Fn NeuronalFunction
-}
-
-// Type for Neuronal
-func (b *Neuronal) Type() Type {
-	return NeuronalType
-}
-
-// String for Neuronal
-func (b *Neuronal) String() string {
-	return "neuronal function"
-}
-
 // CanApply for this type
 func (b *Builtin) CanApply(op token.Type, t Type) bool {
-	return false
-}
-
-// CanApply for this type
-func (b *Neuronal) CanApply(op token.Type, t Type) bool {
 	return false
 }
 

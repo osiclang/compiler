@@ -673,8 +673,6 @@ func doFunction(t token.Token, f object.Object, args []object.Object, stop <-cha
 		return evaluated
 	case *object.Builtin:
 		return function.Fn(args...)
-	case *object.Neuronal:
-		return function.Fn(args...)
 	default:
 		return newError(t.Pos, "type '%s' not a function", f.Type())
 	}

@@ -10,7 +10,7 @@ import (
 )
 
 // Run starts the repl to read and run a line at a time
-func Run(in io.Reader, out io.Writer, name string, path string, stop <-chan struct{}) {
+func Run(in io.Reader, out io.Writer, name string, path string, cmp bool, asm bool, stop <-chan struct{}) {
 	env := object.NewEnvironment()
 
 	l := lexer.WithReader(in, name, path)
